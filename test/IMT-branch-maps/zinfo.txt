@@ -1,0 +1,9 @@
+title: Zinfo Index System
+summary: An interface for "interesting folders" in the filesystem
+description: Searches filesystem for certain metadata file and adds founds to a master index.
+authors: matt wilkie <maphew@gmail.com>, @maphew; collaborator <name@example.org>
+date_initiated: 2017-12-22
+latest_milestone: 2018-01-15
+client: IMT Branch
+contact: joshua_whale@ocean.wo
+arbitrary: some other thing, whataver you like
