@@ -1,3 +1,6 @@
+_this first experiment, now tagged v.01, was written in Python 2.7 circa 2017_
+
+
 # Overview
 
 Something that will selectively inventory a file system and build clickable web page of interesting folders. 'Interesting' means there's a certain file in it with some metadata, but it's going to be intermingled with a whole bunch of the directories we don't care about.
