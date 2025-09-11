@@ -71,5 +71,6 @@ Authors & Contacts: use same length and character restrictions and conventions a
 
 Ignoring -- I'm a little unsure about this part. Here I am adding options to something that isn't even built yet! I do like the idea of being able to work on something, still use the metadata format for self-documentation, but not have it yet open for the public. I guess at the very least I should commit to not writing the code for it until the core features are present and working.
 
+Is the metadata spec file a good pattern? The cool kids seem to be using json, but that's not friendly for text editor usage. There's ini, yaml, toml, ...and who knows what else.
 
-
+Does anything like this already exist? I haven't found one but maybe my search fu isn't up to snuff.
