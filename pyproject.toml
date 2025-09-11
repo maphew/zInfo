@@ -5,11 +5,15 @@ name = "zinfo"
 requires-python = ">= 3.11"
 version = "0.1.0"
 dependencies = [
+    "click",
     "marimo",
     "pytest",
     "pytest-cov",
     "pip"
 ]
+
+[project.scripts]
+zinfo = "zinfo.cli:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -19,16 +23,9 @@ build-backend = "setuptools.build_meta"
 packages = ["zinfo", "zinfo.core"]
 package-dir = {"" = "src"}
 
-# [build-system]
-# build-backend = "hatchling.build"
-# requires = ["hatchling"]
-
 [tool.pixi.project]
 channels = ["conda-forge"]
 platforms = ["win-64"]
-
-#[tool.pixi.pypi-dependencies]
-#zinfo = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 marimo = ">=0.10.7,<0.11"
