@@ -14,7 +14,7 @@ zInfo is a tool designed to create an organized index or catalogue of projects a
 1. **Scanning**: zInfo walks a specified directory tree (with configurable depth) to locate metadata marker files (default: `zinfo.txt`). It parses these files for key-value pairs (e.g., title, summary, authors, dates).
 2. **Metadata Extraction**: Supports flexible metadata fields, ignoring projects marked as private. Extracts structured data into a unified model (`ResourceMetadata`).
 3. **Caching and Persistence**: Stores results in a SQLite database for fast lookups, tracking changes via timestamps, and enabling incremental updates.
-4. **Indexing and Querying**: Builds a searchable index. Currently, CLI-based output; future enhancements include browseable/filterable interfaces (e.g., via marimo UI).
+4. **Indexing and Querying**: Builds a searchable index. Currently, CLI-based output; future enhancements include browseable/filterable interfaces (e.g. via GUI or web).
 5. **Project Initiation**: Tools to create new project folders with boilerplate metadata files.
 6. **Extensibility**: Modular scanner architecture allows support for different metadata formats (e.g., integrating legacy `appinfo.txt` or `project.ini` parsers).
 

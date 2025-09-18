@@ -30,7 +30,6 @@ From pyproject.toml:
 - click (CLI)
 - marimo (UI, version >=0.10.7,<0.11)
 - pytest, pytest-cov (testing)
-- pip (installation)
 
 Runtime: Standard library (datetime, json, os, logging, sqlite3)
 

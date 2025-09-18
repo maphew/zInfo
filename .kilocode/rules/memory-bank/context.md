@@ -12,7 +12,7 @@
 
 ## Next Steps
 - Complete the query command with filtering by title, author, date.
-- Integrate marimo for a browseable, filterable UI.
-- Extend scanner to support additional metadata formats (e.g., appinfo.txt, project.ini).
 - Add project initiation tools to create boilerplate folders and metadata files.
+- Build a browseable, filterable UI.
+- Extend scanner to support additional metadata formats (e.g., appinfo.txt, project.ini).
 - Enhance caching with incremental updates and change detection.
