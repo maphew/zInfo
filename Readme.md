@@ -1,6 +1,8 @@
 Zinfo
 =====
 
+**DRAFT**
+
 _An interface for "interesting folders" in the filesystem_
 
 	Walk a folder tree

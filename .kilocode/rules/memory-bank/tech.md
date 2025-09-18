@@ -1,22 +1,22 @@
 # Technologies and Setup
 
 ## Technologies Used
-- **Language**: Python 3.11+ (requires-python >= 3.11)
+- **Language**: Python 3.11+
 - **CLI Framework**: Click for command-line interface
 - **Database**: SQLite for caching and persistence
 - **Data Structures**: dataclasses for models
 - **File Handling**: pathlib for cross-platform paths
 - **Testing**: pytest with fixtures and coverage
 - **UI (Future)**: marimo for interactive notebook-style interface
-- **Build/Dependency Management**: setuptools (build), pixi (environment management)
+- **Environment & Dependency Management**: uv from Astral.sh
 
 ## Development Setup
 - **Project Structure**: 
   - `src/zinfo/`: Main package with `__init__.py`, `cli.py`, `core/` (models, scanner, cache), legacy scripts
   - `tests/`: Pytest suite with `conftest.py` (fixtures), `core/` (unit tests), `fixtures/` (sample data)
-- **Installation**: `pixi install` for dev environment; `pip install -e .` for editable install
+- **Installation**: `uv tool install -e .` for editable install
 - **Running**: `zinfo scan --root . --depth 5` (CLI entry via project.scripts in pyproject.toml)
-- **Testing**: `pixi run test` (pytest with coverage)
+- **Testing**: `uv run test` (pytest with coverage)
 - **Database**: SQLite file (default: zinfo.db) created on first scan
 
 ## Technical Constraints

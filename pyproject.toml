@@ -9,35 +9,12 @@ dependencies = [
     "marimo",
     "pytest",
     "pytest-cov",
-    "pip"
 ]
 
 [project.scripts]
 zinfo = "zinfo.cli:main"
 
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["zinfo", "zinfo.core"]
-package-dir = {"" = "src"}
-
-[tool.pixi.project]
-channels = ["conda-forge"]
-platforms = ["win-64"]
-
-[tool.pixi.dependencies]
-marimo = ">=0.10.7,<0.11"
-pytest = "*"
-pytest-cov = "*"
-pip = "*"
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --cov=zinfo --cov-report=term-missing"
-
-[tool.pixi.tasks]
-test = { cmd = "pytest" }
-install-dev = { cmd = "python -m pip install -e ." }
