@@ -16,7 +16,7 @@
   - `tests/`: Pytest suite with `conftest.py` (fixtures), `core/` (unit tests), `fixtures/` (sample data)
 - **Installation**: `uv tool install -e .` for editable install
 - **Running**: `zinfo scan --root . --depth 5` (CLI entry via project.scripts in pyproject.toml)
-- **Testing**: `uv run test` (pytest with coverage)
+- **Testing**: `uv run pytest` (pytest with coverage)
 - **Database**: SQLite file (default: zinfo.db) created on first scan
 
 ## Technical Constraints

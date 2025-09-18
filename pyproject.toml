@@ -6,8 +6,6 @@ requires-python = ">= 3.11"
 version = "0.1.0"
 dependencies = [
     "click",
-    "pytest",
-    "pytest-cov",
 ]
 
 [project.scripts]
@@ -17,3 +15,9 @@ zinfo = "zinfo.cli:main"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --cov=zinfo --cov-report=term-missing"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+]
