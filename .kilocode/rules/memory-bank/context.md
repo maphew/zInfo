@@ -9,6 +9,7 @@
 - Migrated from standalone HTML generation scripts (envapplist.py, envmapplist.py) to a modular scanner architecture.
 - Added pytest-based unit tests for scanner functionality.
 - Defined dataclasses for metadata and scan results.
+- Completed transition to UV for env and package management; tests now run cleanly with all imports resolved.
 
 ## Next Steps
 - Complete the query command with filtering by title, author, date.
