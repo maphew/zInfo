@@ -9,6 +9,7 @@ zInfo is a command-line tool that scans directory trees to locate and index "int
 - **Modular Architecture**: Extensible scanner system supporting multiple metadata formats
 - **SQLite Caching**: Persistent indexing with fast lookups and incremental updates
 - **CLI Interface**: Simple command-line interface for scanning and querying
+- **GUI Interface**: Cross-platform graphical user interface built with Toga
 - **Cross-Platform**: Works on Windows, Linux, and macOS
 - **Metadata Extraction**: Parses project metadata from text files
 - **Error Handling**: Robust error collection and reporting
@@ -89,6 +90,40 @@ zinfo query --after 2024-01 --date-field last_modified
 # Combine date filtering with other filters
 zinfo query --after 2024-01 --title "Research" --format table --limit 5
 ```
+
+## GUI Interface
+
+zInfo also provides a cross-platform graphical user interface built with the Toga framework:
+
+### Running the GUI
+
+```bash
+# Launch the GUI application
+zinfo-gui
+
+# Launch with specific cache database
+zinfo-gui /path/to/cache.db
+```
+
+### GUI Features
+
+- **Scan Interface**: Configure scan parameters with a user-friendly dialog
+- **Query Interface**: Advanced filtering and search with real-time results
+- **Progress Indicators**: Visual feedback during long-running operations
+- **Results Table**: Sortable, searchable table view of indexed projects
+- **Error Notifications**: User-friendly error messages and warnings
+- **Settings Management**: Configure application preferences and defaults
+
+### GUI Architecture
+
+The GUI follows a modular architecture that allows easy migration between UI frameworks:
+
+- **Framework-Agnostic Layer**: Abstract interfaces for UI operations
+- **Toga Implementation**: Cross-platform GUI components
+- **Application Controller**: Coordinates UI and core functionality
+- **Reusable Components**: Tables, forms, dialogs, and progress indicators
+
+For detailed GUI documentation, see [GUI README](src/zinfo/ui/README.md).
 
 ## Configuration
 
@@ -191,6 +226,13 @@ src/zinfo/
 │   ├── models.py       # Data models and dataclasses
 │   ├── scanner.py      # Scanner implementations
 │   └── cache.py        # SQLite caching layer
+├── ui/                 # Graphical user interface
+│   ├── __init__.py     # Abstract UI interfaces
+│   ├── app.py          # Application controller
+│   ├── main.py         # GUI entry point
+│   ├── toga_app.py     # Toga GUI implementation
+│   ├── toga_components.py # Toga UI components
+│   └── README.md       # GUI documentation
 tests/                  # Test suite
 tickets/                # Enhancement tickets
 ```

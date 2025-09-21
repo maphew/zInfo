@@ -7,10 +7,12 @@ requires-python = ">= 3.11"
 version = "0.1.0"
 dependencies = [
     "click",
+    "toga>=0.4.0",
 ]
 
 [project.scripts]
 zinfo = "zinfo.cli:main"
+zinfo-gui = "zinfo.ui.main:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

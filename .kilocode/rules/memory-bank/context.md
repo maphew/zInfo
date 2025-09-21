@@ -4,6 +4,7 @@
 - Core CLI implementation completed with scanning and querying functionality.
 - SQLite caching system implemented with search capabilities.
 - Comprehensive error handling and logging throughout the system.
+- **GUI implementation completed** with Toga-based cross-platform interface.
 
 ## Recent Changes
 - Completed removal of legacy HTML generation scripts (envapplist.py, envmapplist.py) and migration to modular scanner architecture.
