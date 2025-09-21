@@ -1,4 +1,5 @@
 title: Zinfo Index System
+shortname: zinfo
 summary: An interface for "interesting folders" in the filesystem
 description: Searches filesystem for certain metadata file and adds founds to a master index.
 authors: matt wilkie <maphew@gmail.com>, @maphew; collaborator <name@example.org>

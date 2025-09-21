@@ -2,7 +2,7 @@
 
 **An index/catalogue system for projects in the file system**
 
-zInfo is a command-line tool that scans directory trees to locate and index "interesting folders" by reading project metadata files. It provides a searchable, filterable interface to your project ecosystem, making it easy to discover and manage projects across your filesystem.
+zInfo is a command-line tool that scans directory trees to locate and index "interesting folders" by reading project metadata files. It provides a searchable, filterable interface to your project ecosystem, making it easy to discover and manage projects across your filesystem no matter where they are. No longer do you need to have all your projects co-located in a single 'Projects' folder tree.
 
 ## Features
 
@@ -52,7 +52,7 @@ zinfo query
 zinfo query --title "web"
 
 # Filter by author
-zinfo query --author "john"
+zinfo query --author "jonah"
 
 # Filter by date range
 zinfo query --after 2024-01-01 --before 2024-12-31
@@ -66,6 +66,7 @@ zInfo currently supports `zinfo.txt` metadata files. The format uses simple key-
 
 ```
 title: My Project
+shortname: my-project
 summary: A brief description of what this project does
 description: A more detailed explanation of the project's purpose and goals
 authors: John Doe <john@example.com>, @johndoe
@@ -77,6 +78,7 @@ contact: project-lead@example.com
 
 **Supported Fields:**
 - `title` (required): Project name (max 100 chars)
+- `shortname`: nickname, for casual use, quick typing (max 20 chars)
 - `summary`: Short description (max 200 chars)
 - `description`: Detailed description (max 1000 chars)
 - `authors`: Semicolon-delimited list with email/GitHub handles
@@ -92,29 +94,6 @@ contact: project-lead@example.com
 - `--depth`: How deep to traverse the folder tree (default: 5)
 - `--cache`: SQLite database file location (default: zinfo.db)
 - `--verbose`: Enable detailed logging
-
-## Migration from Legacy Scripts
-
-### Legacy Script Removal
-
-The legacy HTML generation scripts (`envapplist.py` and `envmapplist.py`) have been removed and replaced with the new modular CLI architecture. This change provides:
-
-- **Better maintainability**: Modular, testable code structure
-- **Enhanced functionality**: SQLite caching and extensible metadata support
-- **Improved performance**: Efficient scanning and querying
-- **Better error handling**: Comprehensive error reporting
-
-### Migration Guide
-
-**Before (Legacy):**
-```bash
-python src/v.01/envapplist.py --root \\server\share\projects
-```
-
-**After (New CLI):**
-```bash
-zinfo scan --root /path/to/projects --depth 5
-```
 
 ### Future Enhancements
 
