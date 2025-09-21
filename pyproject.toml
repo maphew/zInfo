@@ -19,8 +19,11 @@ addopts = "-v --cov=zinfo --cov-report=term-missing"
 
 [dependency-groups]
 dev = [
+    "black>=25.9.0",
+    "mypy>=1.18.2",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
+    "ruff>=0.13.1",
 ]
 
 [tool.uv]

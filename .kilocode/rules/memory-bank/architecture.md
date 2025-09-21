@@ -17,7 +17,6 @@ Data flow: CLI -> Scanner (with Cache) -> Models -> Cache -> Query/Output.
 - **Core Models**: [`src/zinfo/core/models.py`](src/zinfo/core/models.py) - `ResourceMetadata` and `ScanResult` dataclasses.
 - **Scanning**: [`src/zinfo/core/scanner.py`](src/zinfo/core/scanner.py) - `BaseScanner` (ABC) and `ZinfoScanner` implementation.
 - **Caching**: [`src/zinfo/core/cache.py`](src/zinfo/core/cache.py) - SQLite cache implementation with resource and scan tables.
-- **Legacy Scripts**: [`src/zinfo/envapplist.py`](src/zinfo/envapplist.py) and [`src/zinfo/envmapplist.py`](src/zinfo/envmapplist.py) - HTML generators for specific metadata formats (appinfo.txt, project.ini), serving as prototypes for extensibility.
 
 ## Key Technical Decisions
 - **Metadata Parsing**: Simple key-value parsing from first 50 lines of zinfo.txt (case-insensitive keys), with support for arbitrary fields in `extra` dict.
@@ -38,7 +37,6 @@ Data flow: CLI -> Scanner (with Cache) -> Models -> Cache -> Query/Output.
 - Scanner traverses dirs, extracts via extract_metadata -> Models, stores via Cache.
 - Cache interacts with DB, serializes Models to rows (JSON for extra).
 - Models are immutable dataclasses, used across layers.
-- Legacy scripts are standalone but share concepts (dir scanning, metadata parsing) that inform core design.
 
 ## Critical Implementation Paths
 - **Scan Flow**: cli.scan() -> ZinfoScanner.scan() -> os.walk -> extract_metadata (parse zinfo.txt) -> ResourceMetadata -> Cache.store_scan_result().
