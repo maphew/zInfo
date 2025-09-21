@@ -1,3 +1,7 @@
+# zinfo marker file and index database
+zinfo.txt
+zinfo.db
+
 # Python-generated files
 __pycache__/
 *.py[oc]
