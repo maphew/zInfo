@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from zinfo.core.scanner import ZinfoScanner
-from zinfo.core.cache import Cache
+from zinfo.core.cache import Cache, parse_date
 from zinfo.core.models import ScanResult, ResourceMetadata
 
 
@@ -82,6 +82,10 @@ def scan(root: Path, depth: int, cache_db: Path, verbose: bool):
               help="Show all resources (ignore other filters).")
 @click.option("--count", "-c", is_flag=True, help="Show only count of matching resources.")
 @click.option("--id", "-i", help="Get specific resource by ID.")
+@click.option("--after", help="Filter resources after this date (YYYY, YYYY-MM, or YYYY-MM-DD).")
+@click.option("--before", help="Filter resources before this date (YYYY, YYYY-MM, or YYYY-MM-DD).")
+@click.option("--date-field", default="created",
+              help="Date field to filter on (created, updated, last_modified, last_indexed).")
 def query(
     cache_db: Path,
     verbose: bool,
@@ -92,7 +96,10 @@ def query(
     format: str,
     show_all: bool,
     count: bool,
-    id: Optional[str]
+    id: Optional[str],
+    after: Optional[str],
+    before: Optional[str],
+    date_field: str
 ):
     """Query the index with flexible filtering and display options."""
     if verbose:
@@ -110,6 +117,20 @@ def query(
     total_count = cache.get_resource_count()
     if total_count == 0:
         click.echo("No resources found in cache. Run 'zinfo scan' first.")
+        return
+
+    # Parse date parameters
+    after_date = parse_date(after) if after else None
+    before_date = parse_date(before) if before else None
+
+    if after and not after_date:
+        click.echo(f"Error: Invalid date format for --after: {after}")
+        click.echo("Use formats like: 2024, 2024-01, 2024-01-15")
+        return
+
+    if before and not before_date:
+        click.echo(f"Error: Invalid date format for --before: {before}")
+        click.echo("Use formats like: 2024, 2024-01, 2024-01-15")
         return
 
     # Handle specific ID query
@@ -136,7 +157,15 @@ def query(
         title = author = metadata_type = None
         limit = limit or 50  # Default limit for "all" to avoid overwhelming output
 
-    results = cache.search_resources(title, author, metadata_type, limit)
+    results = cache.search_resources(
+        title=title,
+        author=author,
+        metadata_type=metadata_type,
+        limit=limit,
+        after_date=after_date,
+        before_date=before_date,
+        date_field=date_field
+    )
 
     if not results:
         if show_all:

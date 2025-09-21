@@ -6,7 +6,7 @@ import pytest
 import tempfile
 
 from zinfo.core.models import ResourceMetadata, ScanResult
-from zinfo.core.cache import Cache
+from zinfo.core.cache import Cache, parse_date, extract_date_from_metadata
 
 
 @pytest.fixture
@@ -177,3 +177,97 @@ def test_get_resource_count(cache, sample_resource):
 
     cache.store_resource(sample_resource)
     assert cache.get_resource_count() == 1
+
+
+def test_parse_date():
+    """Test date parsing with various formats."""
+    from datetime import datetime
+
+    # Test year only
+    assert parse_date("2024") == datetime(2024, 1, 1)
+
+    # Test year-month
+    assert parse_date("2024-01") == datetime(2024, 1, 1)
+
+    # Test full date
+    assert parse_date("2024-01-15") == datetime(2024, 1, 15)
+
+    # Test date with time
+    assert parse_date("2024-01-15 14:30") == datetime(2024, 1, 15, 14, 30)
+
+    # Test ISO format
+    assert parse_date("2024-01-15T14:30:00") == datetime(2024, 1, 15, 14, 30)
+
+    # Test invalid date
+    assert parse_date("invalid") is None
+    assert parse_date("") is None
+    assert parse_date(None) is None
+
+
+def test_extract_date_from_metadata():
+    """Test extracting dates from metadata."""
+    from datetime import datetime
+
+    # Test with valid date
+    metadata = {"created": "2024-01-15"}
+    assert extract_date_from_metadata(metadata, "created") == datetime(2024, 1, 15)
+
+    # Test with year only
+    metadata = {"created": "2024"}
+    assert extract_date_from_metadata(metadata, "created") == datetime(2024, 1, 1)
+
+    # Test with missing field
+    assert extract_date_from_metadata(metadata, "missing") is None
+
+    # Test with None metadata
+    assert extract_date_from_metadata(None, "created") is None
+
+
+def test_search_resources_with_date_filtering(cache):
+    """Test searching resources with date filtering."""
+    from datetime import datetime
+
+    # Create resources with different dates
+    resource1 = ResourceMetadata(
+        id="test/resource1",
+        title="Resource 1",
+        link="file://test1.txt",
+        contact="test@example.com",
+        last_modified=datetime(2024, 1, 15),
+        last_indexed=datetime.now(),
+        extra={"created": "2024-01-15"}
+    )
+
+    resource2 = ResourceMetadata(
+        id="test/resource2",
+        title="Resource 2",
+        link="file://test2.txt",
+        contact="test@example.com",
+        last_modified=datetime(2024, 6, 15),
+        last_indexed=datetime.now(),
+        extra={"created": "2024-06-15"}
+    )
+
+    cache.store_resource(resource1)
+    cache.store_resource(resource2)
+
+    # Test filtering by metadata date (created)
+    after_date = datetime(2024, 3, 1)
+    results = cache.search_resources(after_date=after_date, date_field="created")
+    assert len(results) == 1
+    assert results[0].id == "test/resource2"
+
+    # Test filtering by database date (last_modified)
+    results = cache.search_resources(after_date=after_date, date_field="last_modified")
+    assert len(results) == 1
+    assert results[0].id == "test/resource2"
+
+    # Test date range filtering
+    before_date = datetime(2024, 3, 1)
+    results = cache.search_resources(
+        after_date=datetime(2024, 1, 1),
+        before_date=before_date,
+        date_field="created"
+    )
+    assert len(results) == 1
+    assert results[0].id == "test/resource1"

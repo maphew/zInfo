@@ -77,6 +77,17 @@ zinfo query --limit 10
 
 # Combine filters
 zinfo query --title "analysis" --author "matt" --format detailed
+
+# Filter by date range (supports partial dates: YYYY, YYYY-MM, YYYY-MM-DD)
+zinfo query --after 2024-01 --before 2024-12
+zinfo query --after 2024-01-01 --before 2024-12-31
+
+# Filter by different date fields
+zinfo query --after 2024-01 --date-field created
+zinfo query --after 2024-01 --date-field last_modified
+
+# Combine date filtering with other filters
+zinfo query --after 2024-01 --title "Research" --format table --limit 5
 ```
 
 ## Configuration
@@ -128,6 +139,9 @@ contact: project-lead@example.com
 - `--all`, `-A`: Show all resources (ignore other filters)
 - `--count`, `-c`: Show only count of matching resources
 - `--id`, `-i`: Get specific resource by ID
+- `--after`: Filter resources after this date (YYYY, YYYY-MM, or YYYY-MM-DD)
+- `--before`: Filter resources before this date (YYYY, YYYY-MM, or YYYY-MM-DD)
+- `--date-field`: Date field to filter on (created, updated, last_modified, last_indexed)
 
 ### Future Enhancements
 

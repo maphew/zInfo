@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List, Optional
 import json
 import logging
+import re
 
 from .models import ResourceMetadata, ScanResult
 
@@ -28,6 +29,76 @@ def convert_datetime(s):
 
 sqlite3.register_adapter(datetime, adapt_datetime)
 sqlite3.register_converter("TIMESTAMP", convert_datetime)
+
+
+def parse_date(date_str: Optional[str]) -> Optional[datetime]:
+    """Parse date string supporting multiple formats and partial dates.
+
+    Supports formats like:
+    - 2024 (year only)
+    - 2024-01 (year-month)
+    - 2024-01-15 (full date)
+    - 2024-01-15 14:30 (date with time)
+    """
+    if not date_str or not date_str.strip():
+        return None
+
+    date_str = date_str.strip()
+
+    # Handle year only (YYYY)
+    if re.match(r'^\d{4}$', date_str):
+        return datetime(int(date_str), 1, 1)
+
+    # Handle year-month (YYYY-MM)
+    if re.match(r'^\d{4}-\d{2}$', date_str):
+        year, month = map(int, date_str.split('-'))
+        return datetime(year, month, 1)
+
+    # Handle full date (YYYY-MM-DD)
+    if re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
+        year, month, day = map(int, date_str.split('-'))
+        return datetime(year, month, day)
+
+    # Handle date with time (YYYY-MM-DD HH:MM or YYYY-MM-DD HH:MM:SS)
+    if re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}', date_str):
+        parts = date_str.split()
+        date_part = parts[0]
+        time_part = parts[1]
+
+        year, month, day = map(int, date_part.split('-'))
+        hour, minute = map(int, time_part.split(':'))
+
+        # Handle optional seconds
+        second = 0
+        if len(time_part.split(':')) > 2:
+            second = int(time_part.split(':')[2])
+
+        return datetime(year, month, day, hour, minute, second)
+
+    # Try standard datetime parsing as fallback
+    try:
+        return datetime.fromisoformat(date_str.replace(' ', 'T'))
+    except ValueError:
+        logger.warning(f"Could not parse date: {date_str}")
+        return None
+
+
+def extract_date_from_metadata(extra: Optional[dict], date_field: str) -> Optional[datetime]:
+    """Extract and parse date from metadata extra field."""
+    if not extra or date_field not in extra:
+        return None
+
+    date_value = extra[date_field]
+    if isinstance(date_value, str):
+        return parse_date(date_value)
+    elif isinstance(date_value, (int, float)):
+        # Handle Unix timestamps
+        try:
+            return datetime.fromtimestamp(date_value)
+        except (OSError, ValueError):
+            return None
+
+    return None
 
 
 class Cache:
@@ -219,7 +290,10 @@ class Cache:
         title: Optional[str] = None,
         author: Optional[str] = None,
         metadata_type: Optional[str] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        after_date: Optional[datetime] = None,
+        before_date: Optional[datetime] = None,
+        date_field: str = "created"  # Field to use for date filtering: created, updated, last_modified, last_indexed
     ) -> List[ResourceMetadata]:
         """Search resources with flexible filtering options."""
         conn = sqlite3.connect(
@@ -244,6 +318,26 @@ class Cache:
                 query_parts.append("AND metadata_type = ?")
                 params.append(metadata_type)
 
+            # Handle date filtering
+            if after_date or before_date:
+                if date_field in ["last_modified", "last_indexed"]:
+                    # Use database datetime fields
+                    if after_date:
+                        query_parts.append(f"AND {date_field} >= ?")
+                        params.append(after_date)
+                    if before_date:
+                        query_parts.append(f"AND {date_field} <= ?")
+                        params.append(before_date)
+                else:
+                    # Use metadata fields from JSON extra
+                    # This requires a more complex query since we need to parse JSON
+                    if after_date:
+                        query_parts.append(f"AND (extra->>'{date_field}' IS NOT NULL AND datetime(extra->>'{date_field}') >= ?)")
+                        params.append(after_date.isoformat())
+                    if before_date:
+                        query_parts.append(f"AND (extra->>'{date_field}' IS NOT NULL AND datetime(extra->>'{date_field}') <= ?)")
+                        params.append(before_date.isoformat())
+
             query_parts.append("ORDER BY last_indexed DESC")
 
             if limit:
@@ -255,7 +349,19 @@ class Cache:
 
             resources = []
             for row in conn.execute(query, params):
-                resources.append(self._row_to_resource(row))
+                resource = self._row_to_resource(row)
+
+                # Additional filtering for metadata date fields (since JSON parsing in SQL is limited)
+                if date_field not in ["last_modified", "last_indexed"]:
+                    if after_date or before_date:
+                        metadata_date = extract_date_from_metadata(resource.extra, date_field)
+                        if metadata_date:
+                            if after_date and metadata_date < after_date:
+                                continue
+                            if before_date and metadata_date > before_date:
+                                continue
+
+                resources.append(resource)
 
             return resources
         finally:
