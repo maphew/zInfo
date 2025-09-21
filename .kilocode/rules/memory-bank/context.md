@@ -4,7 +4,7 @@
 - Core CLI implementation completed with scanning and querying functionality.
 - SQLite caching system implemented with search capabilities.
 - Comprehensive error handling and logging throughout the system.
-- **GUI implementation completed** with Toga-based cross-platform interface.
+- **GUI implementation completed** with NullUI for headless/CLI-only usage.
 
 ## Recent Changes
 - Completed removal of legacy HTML generation scripts (envapplist.py, envmapplist.py) and migration to modular scanner architecture.
@@ -14,6 +14,10 @@
 - **Implemented query command** with filtering by title, author, type, and ID.
 - Added multiple output formats (table, detailed, JSON) for different use cases.
 - Enhanced cache layer with advanced search methods and improved test coverage (96% for cache.py).
+- **Implemented NullUI** for headless/CLI-only usage as the default GUI implementation.
+- **Removed Tkinter-specific GUI implementation** (tk_app.py, tk_components.py, test_tk_components.py).
+- **Removed Toga-specific GUI implementation** (toga_app.py, toga_components.py, test_toga_components.py) and updated main.py to use NullUI as the default.
+- Removed debug_gui_test.py and cleaned up framework selection mechanism in main.py to explicitly default to NullUI.
 
 ## Next Steps
 - Add project initiation tools to create boilerplate folders and metadata files.

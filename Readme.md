@@ -9,7 +9,7 @@ zInfo is a command-line tool that scans directory trees to locate and index "int
 - **Modular Architecture**: Extensible scanner system supporting multiple metadata formats
 - **SQLite Caching**: Persistent indexing with fast lookups and incremental updates
 - **CLI Interface**: Simple command-line interface for scanning and querying
-- **GUI Interface**: Cross-platform graphical user interface built with Toga
+- **UI Framework**: Extensible UI framework with NullUI for headless usage
 - **Cross-Platform**: Works on Windows, Linux, and macOS
 - **Metadata Extraction**: Parses project metadata from text files
 - **Error Handling**: Robust error collection and reporting
@@ -91,39 +91,37 @@ zinfo query --after 2024-01 --date-field last_modified
 zinfo query --after 2024-01 --title "Research" --format table --limit 5
 ```
 
-## GUI Interface
+## UI Framework
 
-zInfo also provides a cross-platform graphical user interface built with the Toga framework:
+zInfo provides a headless UI framework designed for CLI-only usage and as a foundation for future GUI implementations:
 
 ### Running the GUI
 
 ```bash
-# Launch the GUI application
+# Launch the GUI application (headless mode)
 zinfo-gui
 
 # Launch with specific cache database
 zinfo-gui /path/to/cache.db
 ```
 
-### GUI Features
+### UI Features
 
-- **Scan Interface**: Configure scan parameters with a user-friendly dialog
-- **Query Interface**: Advanced filtering and search with real-time results
-- **Progress Indicators**: Visual feedback during long-running operations
-- **Results Table**: Sortable, searchable table view of indexed projects
-- **Error Notifications**: User-friendly error messages and warnings
-- **Settings Management**: Configure application preferences and defaults
+- **Headless Operation**: No-op implementations for all UI operations
+- **CLI Integration**: Seamless fallback for command-line environments
+- **Error Logging**: User-friendly error messages logged to console
+- **Testing Support**: Suitable for automated testing and CI/CD pipelines
+- **Extensibility**: Abstract interfaces ready for future GUI framework integrations
 
-### GUI Architecture
+### UI Architecture
 
-The GUI follows a modular architecture that allows easy migration between UI frameworks:
+The UI follows a modular architecture with abstract interfaces:
 
 - **Framework-Agnostic Layer**: Abstract interfaces for UI operations
-- **Toga Implementation**: Cross-platform GUI components
+- **NullUI Implementation**: Headless/no-op implementation for CLI usage
 - **Application Controller**: Coordinates UI and core functionality
-- **Reusable Components**: Tables, forms, dialogs, and progress indicators
 
-For detailed GUI documentation, see [GUI README](src/zinfo/ui/README.md).
+For detailed UI documentation, see [UI README](src/zinfo/ui/README.md).
 
 ## Configuration
 
@@ -226,12 +224,11 @@ src/zinfo/
 │   ├── models.py       # Data models and dataclasses
 │   ├── scanner.py      # Scanner implementations
 │   └── cache.py        # SQLite caching layer
-├── ui/                 # Graphical user interface
+├── ui/                 # User interface framework
 │   ├── __init__.py     # Abstract UI interfaces
 │   ├── app.py          # Application controller
 │   ├── main.py         # GUI entry point
-│   ├── toga_app.py     # Toga GUI implementation
-│   ├── toga_components.py # Toga UI components
+│   ├── null_ui.py      # Headless UI implementation
 │   └── README.md       # GUI documentation
 tests/                  # Test suite
 tickets/                # Enhancement tickets

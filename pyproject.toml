@@ -10,14 +10,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-toga = []
 dev = [
     "black>=25.9.0",
     "mypy>=1.18.2",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.13.1",
-    "zinfo[toga]",
 ]
 
 [project.scripts]
@@ -34,9 +32,7 @@ where = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --cov=zinfo --cov-report=term-missing"
-markers = [
-    "toga: marks tests as toga-related (deselect with '-m \"not toga\"')",
-]
+markers = []
 
 [tool.uv]
 package = true

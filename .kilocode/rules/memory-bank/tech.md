@@ -3,7 +3,7 @@
 ## Technologies Used
 - **Language**: Python 3.11+
 - **CLI Framework**: Click for command-line interface
-- **GUI Framework**: Toga for cross-platform graphical interface
+- **GUI Framework**: NullUI for headless/CLI-only usage
 - **Database**: SQLite for caching and persistence
 - **Data Structures**: dataclasses for models
 - **File Handling**: pathlib for cross-platform paths
@@ -28,7 +28,6 @@
 ## Dependencies
 From pyproject.toml:
 - click (CLI)
-- toga (GUI, version >=0.4.0)
 - pytest, pytest-cov (testing)
 
 Runtime: Standard library (datetime, json, os, logging, sqlite3)
