@@ -214,6 +214,77 @@ class Cache:
         finally:
             conn.close()
 
+    def search_resources(
+        self,
+        title: Optional[str] = None,
+        author: Optional[str] = None,
+        metadata_type: Optional[str] = None,
+        limit: Optional[int] = None
+    ) -> List[ResourceMetadata]:
+        """Search resources with flexible filtering options."""
+        conn = sqlite3.connect(
+            self.db_path, timeout=self.timeout, detect_types=sqlite3.PARSE_DECLTYPES
+        )
+        try:
+            conn.row_factory = sqlite3.Row
+
+            # Build query dynamically
+            query_parts = ["SELECT * FROM resources WHERE 1=1"]
+            params = []
+
+            if title:
+                query_parts.append("AND title LIKE ?")
+                params.append(f"%{title}%")
+
+            if author:
+                query_parts.append("AND (extra LIKE ? OR contact LIKE ?)")
+                params.extend([f'%"authors": "%{author}%"%', f"%{author}%"])
+
+            if metadata_type:
+                query_parts.append("AND metadata_type = ?")
+                params.append(metadata_type)
+
+            query_parts.append("ORDER BY last_indexed DESC")
+
+            if limit:
+                query_parts.append("LIMIT ?")
+                params.append(limit)
+
+            query = " ".join(query_parts)
+            logger.debug(f"Executing search query: {query} with params: {params}")
+
+            resources = []
+            for row in conn.execute(query, params):
+                resources.append(self._row_to_resource(row))
+
+            return resources
+        finally:
+            conn.close()
+
+    def get_all_resources(self) -> List[ResourceMetadata]:
+        """Get all resources in the cache."""
+        conn = sqlite3.connect(
+            self.db_path, timeout=self.timeout, detect_types=sqlite3.PARSE_DECLTYPES
+        )
+        try:
+            conn.row_factory = sqlite3.Row
+            resources = []
+            for row in conn.execute("SELECT * FROM resources ORDER BY last_indexed DESC"):
+                resources.append(self._row_to_resource(row))
+            return resources
+        finally:
+            conn.close()
+
+    def get_resource_count(self) -> int:
+        """Get total count of resources in the cache."""
+        conn = sqlite3.connect(
+            self.db_path, timeout=self.timeout, detect_types=sqlite3.PARSE_DECLTYPES
+        )
+        try:
+            return conn.execute("SELECT COUNT(*) FROM resources").fetchone()[0]
+        finally:
+            conn.close()
+
     @staticmethod
     def _row_to_resource(row: sqlite3.Row) -> ResourceMetadata:
         """Convert a database row to a ResourceMetadata object."""

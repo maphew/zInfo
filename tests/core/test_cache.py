@@ -124,3 +124,56 @@ def test_update_existing_resource(cache, sample_resource):
     retrieved = cache.get_resource(sample_resource.id)
     assert retrieved is not None
     assert retrieved.title == "Updated Title"
+
+
+def test_search_resources_by_title(cache, sample_resource):
+    """Test searching resources by title."""
+    cache.store_resource(sample_resource)
+
+    # Search by title
+    results = cache.search_resources(title="Test")
+    assert len(results) == 1
+    assert results[0].id == sample_resource.id
+
+    # Search with no matches
+    results = cache.search_resources(title="Nonexistent")
+    assert len(results) == 0
+
+
+def test_search_resources_by_author(cache, sample_resource):
+    """Test searching resources by author."""
+    # Add author to extra field
+    resource_with_author = ResourceMetadata(
+        id="test/resource2",
+        title="Resource with Author",
+        link="file://test2.txt",
+        contact="test@example.com",
+        extra={"authors": "John Doe"}
+    )
+    cache.store_resource(resource_with_author)
+
+    # Search by author
+    results = cache.search_resources(author="John")
+    assert len(results) == 1
+    assert results[0].id == "test/resource2"
+
+    # Search by contact
+    results = cache.search_resources(author="test@example.com")
+    assert len(results) >= 1  # Should find the resource with this contact
+
+
+def test_get_all_resources(cache, sample_resource):
+    """Test getting all resources."""
+    cache.store_resource(sample_resource)
+
+    resources = cache.get_all_resources()
+    assert len(resources) == 1
+    assert resources[0].id == sample_resource.id
+
+
+def test_get_resource_count(cache, sample_resource):
+    """Test getting resource count."""
+    assert cache.get_resource_count() == 0
+
+    cache.store_resource(sample_resource)
+    assert cache.get_resource_count() == 1

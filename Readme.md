@@ -42,20 +42,41 @@ zinfo scan --verbose
 
 ### Querying the Index
 
-Search and filter indexed projects:
+Search and filter indexed projects with flexible options:
 
 ```bash
-# List all indexed projects
+# List all indexed projects (table format)
 zinfo query
+
+# List all projects (limited to avoid overwhelming output)
+zinfo query --all --limit 50
 
 # Filter by title (partial match)
 zinfo query --title "web"
 
-# Filter by author
+# Filter by author (searches in extra fields and contact)
 zinfo query --author "jonah"
 
-# Filter by date range
-zinfo query --after 2024-01-01 --before 2024-12-31
+# Filter by metadata type
+zinfo query --type "zinfo_project"
+
+# Get specific project by ID
+zinfo query --id "path/to/project/zinfo.txt"
+
+# Different output formats
+zinfo query --format table          # Default table format
+zinfo query --format detailed       # Detailed information
+zinfo query --format json           # JSON output for scripting
+
+# Count matching projects
+zinfo query --count                 # Show total count
+zinfo query --title "web" --count   # Count matching filter
+
+# Limit results
+zinfo query --limit 10
+
+# Combine filters
+zinfo query --title "analysis" --author "matt" --format detailed
 ```
 
 ## Configuration
@@ -92,8 +113,21 @@ contact: project-lead@example.com
 
 - `--root`: Directory to start scanning from (default: current directory)
 - `--depth`: How deep to traverse the folder tree (default: 5)
-- `--cache`: SQLite database file location (default: zinfo.db)
+- `--cache-db`: SQLite database file location (default: zinfo.db)
 - `--verbose`: Enable detailed logging
+
+### Query Parameters
+
+- `--cache-db`: SQLite database file location (default: zinfo.db)
+- `--verbose`: Enable detailed logging
+- `--title`, `-t`: Filter by title (partial match)
+- `--author`, `-a`: Filter by author (searches in extra fields and contact)
+- `--type`, `-T`: Filter by metadata type
+- `--limit`, `-l`: Limit number of results
+- `--format`, `-f`: Output format (table, detailed, json)
+- `--all`, `-A`: Show all resources (ignore other filters)
+- `--count`, `-c`: Show only count of matching resources
+- `--id`, `-i`: Get specific resource by ID
 
 ### Future Enhancements
 
