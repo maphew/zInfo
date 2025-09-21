@@ -5,18 +5,21 @@ zInfo follows a modular architecture centered around scanning, metadata extracti
 
 High-level components:
 - **CLI Layer**: Entry point using Click for commands like `scan` and `query`.
+- **GUI Layer**: Headless graphical interface using NullUI for CLI-only usage.
 - **Scanner Layer**: Core logic for directory traversal and metadata extraction using abstract base classes.
 - **Cache Layer**: SQLite-based persistence for scan results and metadata.
 - **Model Layer**: Dataclasses representing resources and scan outcomes.
-- **Output Layer**: Currently CLI echoes; extensible to UI (marimo) or HTML generation.
+- **Output Layer**: CLI echoes and extensible to HTML generation.
 
 Data flow: CLI -> Scanner (with Cache) -> Models -> Cache -> Query/Output.
 
 ## Source Code Paths
-- **Entry Point**: [`src/zinfo/cli.py`](src/zinfo/cli.py) - Defines `main` group and `scan`/`query` commands.
+- **CLI Entry Point**: [`src/zinfo/cli.py`](src/zinfo/cli.py) - Defines `main` group and `scan`/`query` commands.
+- **GUI Entry Point**: [`src/zinfo/ui/main.py`](src/zinfo/ui/main.py) - GUI application launcher and main entry point.
 - **Core Models**: [`src/zinfo/core/models.py`](src/zinfo/core/models.py) - `ResourceMetadata` and `ScanResult` dataclasses.
 - **Scanning**: [`src/zinfo/core/scanner.py`](src/zinfo/core/scanner.py) - `BaseScanner` (ABC) and `ZinfoScanner` implementation.
 - **Caching**: [`src/zinfo/core/cache.py`](src/zinfo/core/cache.py) - SQLite cache implementation with resource and scan tables.
+- **GUI Layer**: [`src/zinfo/ui/`](src/zinfo/ui/) - Modular GUI implementation with NullUI for headless usage.
 
 ## Key Technical Decisions
 - **Metadata Parsing**: Simple key-value parsing from first 50 lines of zinfo.txt (case-insensitive keys), with support for arbitrary fields in `extra` dict.

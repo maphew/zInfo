@@ -9,6 +9,7 @@ zInfo is a command-line tool that scans directory trees to locate and index "int
 - **Modular Architecture**: Extensible scanner system supporting multiple metadata formats
 - **SQLite Caching**: Persistent indexing with fast lookups and incremental updates
 - **CLI Interface**: Simple command-line interface for scanning and querying
+- **UI Framework**: Extensible UI framework with NullUI for headless usage
 - **Cross-Platform**: Works on Windows, Linux, and macOS
 - **Metadata Extraction**: Parses project metadata from text files
 - **Error Handling**: Robust error collection and reporting
@@ -89,6 +90,38 @@ zinfo query --after 2024-01 --date-field last_modified
 # Combine date filtering with other filters
 zinfo query --after 2024-01 --title "Research" --format table --limit 5
 ```
+
+## UI Framework
+
+zInfo provides a headless UI framework designed for CLI-only usage and as a foundation for future GUI implementations:
+
+### Running the GUI
+
+```bash
+# Launch the GUI application (headless mode)
+zinfo-gui
+
+# Launch with specific cache database
+zinfo-gui /path/to/cache.db
+```
+
+### UI Features
+
+- **Headless Operation**: No-op implementations for all UI operations
+- **CLI Integration**: Seamless fallback for command-line environments
+- **Error Logging**: User-friendly error messages logged to console
+- **Testing Support**: Suitable for automated testing and CI/CD pipelines
+- **Extensibility**: Abstract interfaces ready for future GUI framework integrations
+
+### UI Architecture
+
+The UI follows a modular architecture with abstract interfaces:
+
+- **Framework-Agnostic Layer**: Abstract interfaces for UI operations
+- **NullUI Implementation**: Headless/no-op implementation for CLI usage
+- **Application Controller**: Coordinates UI and core functionality
+
+For detailed UI documentation, see [UI README](src/zinfo/ui/README.md).
 
 ## Configuration
 
@@ -191,6 +224,12 @@ src/zinfo/
 │   ├── models.py       # Data models and dataclasses
 │   ├── scanner.py      # Scanner implementations
 │   └── cache.py        # SQLite caching layer
+├── ui/                 # User interface framework
+│   ├── __init__.py     # Abstract UI interfaces
+│   ├── app.py          # Application controller
+│   ├── main.py         # GUI entry point
+│   ├── null_ui.py      # Headless UI implementation
+│   └── README.md       # GUI documentation
 tests/                  # Test suite
 tickets/                # Enhancement tickets
 ```
