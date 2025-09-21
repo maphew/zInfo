@@ -1,6 +1,6 @@
 """Test suite for Toga UI components."""
 
-import pytest
+"""Test suite for Toga UI components."""
 from pathlib import Path
 from unittest.mock import Mock, patch
 

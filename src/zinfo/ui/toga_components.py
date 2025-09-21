@@ -1,6 +1,8 @@
 """Toga-specific UI components for zinfo.
 
 This module contains reusable Toga UI components that implement the abstract interfaces.
+
+NOTE: This module is considered deprecated in favor of the Tkinter implementation.
 """
 
 import toga

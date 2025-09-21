@@ -1,6 +1,8 @@
 """Toga-based GUI implementation for zinfo.
 
 This module provides a Toga-specific implementation of the AbstractUI interface.
+
+NOTE: This module is considered deprecated in favor of the Tkinter implementation.
 """
 
 import toga
