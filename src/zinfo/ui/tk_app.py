@@ -123,6 +123,9 @@ class ZinfoTkApp(AbstractUI):
         toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 5))
         toolbar.columnconfigure(0, weight=1)
 
+        # Use explicit font configuration for individual widgets
+        large_font = ("TkDefaultFont", 12)
+        
         self.scan_button = ttk.Button(toolbar, text="Scan Directory", command=self._on_scan_pressed)
         self.scan_button.grid(row=0, column=0, padx=(0, 5), sticky="w")
 
@@ -136,7 +139,7 @@ class ZinfoTkApp(AbstractUI):
         about_button.grid(row=0, column=3, padx=(0, 5), sticky="w")
 
         # Results area
-        results_label = ttk.Label(self.main_frame, text="Query Results:", font=("TkDefaultFont", 10, "bold"))
+        results_label = ttk.Label(self.main_frame, text="Query Results:", font=("TkDefaultFont", 14, "bold"))
         results_label.grid(row=1, column=0, sticky="w", pady=(5, 2))
 
         self.results_table = ZinfoTable(self.main_frame)
@@ -146,7 +149,7 @@ class ZinfoTkApp(AbstractUI):
 
         # Status bar
         self.status_var = tk.StringVar(value="Ready")
-        self.status_label = ttk.Label(self.main_frame, textvariable=self.status_var, relief="sunken")
+        self.status_label = ttk.Label(self.main_frame, textvariable=self.status_var, relief="sunken", font=("TkDefaultFont", 12))
         self.status_label.grid(row=3, column=0, sticky="ew", pady=(5, 0))
 
         # Initialize zinfo app
@@ -233,22 +236,73 @@ class ZinfoTkApp(AbstractUI):
                 self.scan_button.config(state="disabled")
             self._update_status("Scanning...")
 
+            # Show progress dialog on main thread
+            progress_dialog = self.show_progress_dialog("Scanning", f"Scanning {updated_config.root_path}...")
+
             def scan_thread():
+                if self.zinfo_app is None or self.root is None:
+                    return
+                    
                 try:
-                    success = self.zinfo_app.run_scan(updated_config)
-                    if success:
-                        # Update results table with latest scan
-                        latest_scan = self.zinfo_app.get_latest_scan()
-                        if latest_scan and latest_scan.items:
-                            def _update():
-                                self.show_results_table(latest_scan.items)
-                            self.root.after(0, _update)
-                finally:
-                    def _reenable():
+                    # Initialize cache if not already done
+                    if self.zinfo_app.cache is None:
+                        self.zinfo_app.initialize_cache(updated_config.cache_path)
+
+                    # Create scanner (no GUI operations here)
+                    from zinfo.core.scanner import ZinfoScanner
+                    scanner = ZinfoScanner(
+                        base_dir=updated_config.root_path,
+                        cache=self.zinfo_app.cache,
+                        max_depth=updated_config.max_depth
+                    )
+
+                    # Run scan (core logic only, no GUI)
+                    result = scanner.scan()
+
+                    # Schedule GUI updates on main thread
+                    def _update_success():
+                        try:
+                            progress_dialog.update_progress(100, 100, "Scan completed")
+                            progress_dialog.close()
+
+                            # Show results
+                            if result.errors:
+                                error_msg = f"Scan completed with {len(result.errors)} errors:\n"
+                                error_msg += "\n".join(f"• {error}" for error in result.errors[:5])
+                                if len(result.errors) > 5:
+                                    error_msg += f"\n... and {len(result.errors) - 5} more errors"
+                                self.show_error_message("Scan Completed with Errors", error_msg)
+
+                            success_msg = f"Scan completed successfully!\n"
+                            success_msg += f"Found {result.total_items_found} projects in {result.total_dirs_scanned} directories"
+                            self.show_info_message("Scan Completed", success_msg)
+
+                            # Update results table
+                            if result.items:
+                                self.show_results_table(result.items)
+
+                        finally:
+                            if self.scan_button:
+                                self.scan_button.config(state="normal")
+                            self._update_status("Ready")
+
+                    if self.root:
+                        self.root.after(0, _update_success)
+
+                except Exception as e:
+                    logger.error(f"Error during scan: {e}")
+                    error_str = str(e)
+                    def _update_error():
+                        try:
+                            progress_dialog.close()
+                        except:
+                            pass
+                        self.show_error_message("Scan Error", f"An error occurred during scanning:\n{error_str}")
                         if self.scan_button:
                             self.scan_button.config(state="normal")
                         self._update_status("Ready")
-                    self.root.after(0, _reenable)
+                    if self.root:
+                        self.root.after(0, _update_error)
 
             thread = threading.Thread(target=scan_thread, daemon=True)
             thread.start()
@@ -256,6 +310,10 @@ class ZinfoTkApp(AbstractUI):
     def _on_query_pressed(self) -> None:
         """Handle query button press."""
         if self.zinfo_app is None or self.root is None:
+            return
+
+        if self.zinfo_app.cache is None:
+            self.show_error_message("No Cache", "No cache available. Please run a scan first.")
             return
 
         # Show query filter dialog
@@ -268,18 +326,65 @@ class ZinfoTkApp(AbstractUI):
                 self.query_button.config(state="disabled")
             self._update_status("Querying...")
 
+            # Show progress dialog on main thread
+            progress_dialog = self.show_progress_dialog("Querying", "Searching resources...")
+
             def query_thread():
+                if self.zinfo_app is None or self.root is None or self.zinfo_app.cache is None:
+                    return
+                    
                 try:
-                    results = self.zinfo_app.run_query(updated_filter)
-                    def _update():
-                        self.show_results_table(results)
-                    self.root.after(0, _update)
-                finally:
-                    def _reenable():
+                    # Parse dates (no GUI operations)
+                    after_date = None
+                    before_date = None
+
+                    if updated_filter.after_date:
+                        from zinfo.core.cache import parse_date
+                        after_date = parse_date(updated_filter.after_date)
+
+                    if updated_filter.before_date:
+                        from zinfo.core.cache import parse_date
+                        before_date = parse_date(updated_filter.before_date)
+
+                    # Run search (core logic only, no GUI)
+                    results = self.zinfo_app.cache.search_resources(
+                        title=updated_filter.title,
+                        author=updated_filter.author,
+                        metadata_type=updated_filter.metadata_type,
+                        limit=updated_filter.limit,
+                        after_date=after_date,
+                        before_date=before_date,
+                        date_field=updated_filter.date_field
+                    )
+
+                    # Schedule GUI updates on main thread
+                    def _update_success():
+                        try:
+                            progress_dialog.update_progress(100, 100, f"Found {len(results)} results")
+                            progress_dialog.close()
+                            self.show_results_table(results)
+                        finally:
+                            if self.query_button:
+                                self.query_button.config(state="normal")
+                            self._update_status("Ready")
+
+                    if self.root:
+                        self.root.after(0, _update_success)
+
+                except Exception as e:
+                    logger.error(f"Error during query: {e}")
+                    error_str = str(e)
+                    def _update_error():
+                        try:
+                            progress_dialog.close()
+                        except:
+                            pass
+                        self.show_error_message("Query Error", f"An error occurred during query:\n{error_str}")
                         if self.query_button:
                             self.query_button.config(state="normal")
                         self._update_status("Ready")
-                    self.root.after(0, _reenable)
+                    if self.root:
+                        self.root.after(0, _update_error)
 
             thread = threading.Thread(target=query_thread, daemon=True)
             thread.start()
