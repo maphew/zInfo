@@ -154,6 +154,69 @@ def test_index_with_resources(seeded_cache, temp_db):
         assert '<form' in response.text  # Check for form
         assert 'hx-get="/search"' in response.text  # Check for HTMX attributes
         assert 'id="results"' in response.text  # Check for results div
+        assert 'id="detail"' in response.text  # Check for detail div
+        assert 'hx-get="/detail?id=' in response.text  # Check for HTMX links in table
+    finally:
+        if old_env is not None:
+            os.environ["ZINFO_DB_PATH"] = old_env
+        else:
+            os.environ.pop("ZINFO_DB_PATH", None)
+
+def test_detail_htmx_request(seeded_cache, temp_db):
+    """Test GET /detail with HX-Request header returns details fragment only."""
+    old_env = os.environ.get("ZINFO_DB_PATH")
+    os.environ["ZINFO_DB_PATH"] = str(temp_db)
+
+    try:
+        client = TestClient(app)
+        response = client.get("/detail?id=test/resource1", headers={"HX-Request": "true"})
+        assert response.status_code == 200
+        assert "Python Project" in response.text
+        assert "Type: project" in response.text
+        assert "Link: file://test1.txt" in response.text
+        assert "Contact: alice@example.com" in response.text
+        assert "Doc Dir: None" in response.text
+        assert "zInfo UI - Detail" not in response.text  # Should not return full page
+        assert '<div id="detail-panel"' in response.text
+    finally:
+        if old_env is not None:
+            os.environ["ZINFO_DB_PATH"] = old_env
+        else:
+            os.environ.pop("ZINFO_DB_PATH", None)
+
+def test_detail_non_htmx_request(seeded_cache, temp_db):
+    """Test GET /detail without HX-Request returns full page."""
+    old_env = os.environ.get("ZINFO_DB_PATH")
+    os.environ["ZINFO_DB_PATH"] = str(temp_db)
+
+    try:
+        client = TestClient(app)
+        response = client.get("/detail?id=test/resource1")
+        assert response.status_code == 200
+        assert "Python Project" in response.text
+        assert "Type: project" in response.text
+        assert "Link: file://test1.txt" in response.text
+        assert "Contact: alice@example.com" in response.text
+        assert "Doc Dir: None" in response.text
+        assert "zInfo UI - Detail" in response.text  # Should return full page
+        assert '<div id="detail-panel"' in response.text
+    finally:
+        if old_env is not None:
+            os.environ["ZINFO_DB_PATH"] = old_env
+        else:
+            os.environ.pop("ZINFO_DB_PATH", None)
+
+def test_detail_not_found(seeded_cache, temp_db):
+    """Test GET /detail for non-existent resource."""
+    old_env = os.environ.get("ZINFO_DB_PATH")
+    os.environ["ZINFO_DB_PATH"] = str(temp_db)
+
+    try:
+        client = TestClient(app)
+        response = client.get("/detail?id=nonexistent", headers={"HX-Request": "true"})
+        assert response.status_code == 200
+        assert "Resource not found." in response.text
+        assert "Python Project" not in response.text
     finally:
         if old_env is not None:
             os.environ["ZINFO_DB_PATH"] = old_env

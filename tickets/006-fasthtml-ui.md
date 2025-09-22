@@ -7,7 +7,7 @@ Implement a FastHTML-based web UI for zInfo that provides browseable, filterable
 - [x] Iteration 0 Scaffolding
 - [x] Iteration 1 Browse
 - [x] Iteration 2 Filter
-- [-] Iteration 3 Details
+- [x] Iteration 3 Details
 - [ ] Iteration 4 Scan
 - [ ] Iteration 5 Toasts/Errors
 - [ ] Iteration 6 CLI entry
@@ -20,4 +20,4 @@ Iteration 0 completed: basic FastHTML app structure with index route and smoke t
 Started with Iteration 0: basic app structure and smoke test.
 Iteration 1 completed: modified index route to display table of all cached resources with columns title, type, id, path. Added tests for empty and seeded cache scenarios.
 Iteration 2 completed: added filtering functionality with form inputs for title, author, type, id. Created /search route that handles HTMX requests (partial table) and non-HTMX requests (full page). Updated tests with varied data and filtering scenarios.
-Iteration 3 in progress: Resource details drawer with HTMX. Note link/contact formatting deltas - reference tickets 004 and 005.
+Iteration 3 completed: Resource details drawer with HTMX. Added /detail route that returns panel with title, type, link, contact, doc_dir. HTMX links in table titles, detail div added. Tests for HX/non-HX requests added and passing. Note link/contact formatting deltas - reference tickets 004 and 005.

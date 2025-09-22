@@ -27,7 +27,7 @@ def index():
     else:
         table_rows = [
             Tr(
-                Td(resource.title),
+                Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
                 Td(resource.metadata_type),
                 Td(resource.id),
                 Td(resource.link)
@@ -40,7 +40,7 @@ def index():
         )
         results_div = Div(table, id="results")
 
-    return Titled("zInfo UI", Container(form, results_div))
+    return Titled("zInfo UI", Container(form, results_div, Div(id="detail")))
 
 @rt("/search")
 def search(request, title: str = "", author: str = "", type: str = "", id: str = ""):
@@ -65,7 +65,7 @@ def search(request, title: str = "", author: str = "", type: str = "", id: str =
     else:
         table_rows = [
             Tr(
-                Td(resource.title),
+                Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
                 Td(resource.metadata_type),
                 Td(resource.id),
                 Td(resource.link)
@@ -83,6 +83,30 @@ def search(request, title: str = "", author: str = "", type: str = "", id: str =
         return content
     else:
         return Titled("zInfo UI", Container(content))
+
+@rt("/detail")
+def detail(request, id: str):
+    db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
+    cache = Cache(Path(db_path))
+    resource = cache.get_resource(id)
+
+    if not resource:
+        content = P("Resource not found.")
+    else:
+        panel = Div(
+            H3(resource.title),
+            P(f"Type: {resource.metadata_type}"),
+            P(f"Link: {resource.link}"),
+            P(f"Contact: {resource.contact}"),
+            P(f"Doc Dir: {resource.doc_dir}"),
+            id="detail-panel"
+        )
+        content = panel
+
+    if request.headers.get("HX-Request"):
+        return content
+    else:
+        return Titled("zInfo UI - Detail", Container(content))
 
 def run():
     serve()
