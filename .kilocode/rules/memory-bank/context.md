@@ -5,6 +5,7 @@
 - SQLite caching system implemented with search capabilities.
 - Comprehensive error handling and logging throughout the system.
 - **GUI implementation completed** with NullUI for headless/CLI-only usage.
+- **FastHTML UI MVP completed**: Full browseable, filterable, searchable interface with in-app scan trigger.
 
 ## Recent Changes
 - Completed removal of legacy HTML generation scripts (envapplist.py, envmapplist.py) and migration to modular scanner architecture.
@@ -21,7 +22,6 @@
 
 ## Next Steps
 - Add project initiation tools to create boilerplate folders and metadata files.
-- Build a browseable, filterable UI.
 - Extend scanner to support additional metadata formats (e.g., appinfo.txt, project.ini) - see enhancement tickets 001, 002.
 - Enhance caching with incremental updates and change detection.
 - Implement HTML export functionality - see enhancement ticket 003.

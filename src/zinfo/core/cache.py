@@ -290,6 +290,7 @@ class Cache:
         title: Optional[str] = None,
         author: Optional[str] = None,
         metadata_type: Optional[str] = None,
+        id: Optional[str] = None,
         limit: Optional[int] = None,
         after_date: Optional[datetime] = None,
         before_date: Optional[datetime] = None,
@@ -317,6 +318,10 @@ class Cache:
             if metadata_type:
                 query_parts.append("AND metadata_type = ?")
                 params.append(metadata_type)
+
+            if id:
+                query_parts.append("AND id LIKE ?")
+                params.append(f"%{id}%")
 
             # Handle date filtering
             if after_date or before_date:
