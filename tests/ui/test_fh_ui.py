@@ -258,3 +258,27 @@ contact: test@example.com
                 os.environ["ZINFO_DB_PATH"] = old_env
             else:
                 os.environ.pop("ZINFO_DB_PATH", None)
+
+def test_scan_bad_root_path(temp_db):
+    """Test POST /scan with bad root path yields error toast."""
+    old_env = os.environ.get("ZINFO_DB_PATH")
+    os.environ["ZINFO_DB_PATH"] = str(temp_db)
+
+    try:
+        client = TestClient(app)
+        response = client.post("/scan", data={"root": "/nonexistent/path", "depth": 5})
+        assert response.status_code == 200
+        assert "error" in response.text.lower()  # Check for error toast
+        assert "Scan completed with" in response.text
+    finally:
+        if old_env is not None:
+            os.environ["ZINFO_DB_PATH"] = old_env
+        else:
+            os.environ.pop("ZINFO_DB_PATH", None)
+
+def test_404_handler():
+    """Test 404 handler returns expected content."""
+    client = TestClient(app)
+    response = client.get("/nonexistent")
+    assert "404" in response.text
+    assert "Page Not Found" in response.text

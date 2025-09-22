@@ -1,10 +1,18 @@
 from fasthtml.common import *
+from starlette.responses import HTMLResponse
+from fasthtml.common import Toast, to_xml
 from pathlib import Path
 from zinfo.core.cache import Cache
 from zinfo.core.scanner import ZinfoScanner
 import os
 
 app, rt = fast_app(htmx=True, pico=True)
+setup_toasts(app)
+
+@app.exception_handler(404)
+def not_found(request, exc):
+    content = to_xml(Titled("404 - Page Not Found", Container(H1("404"), P("The page you requested was not found."))))
+    return HTMLResponse(content)
 
 @rt("/")
 def index():
@@ -147,7 +155,15 @@ def scan(root: str = ".", depth: int = 5):
         )
         content = table
 
-    return content
+    # Add toast based on scan result
+    if result.errors:
+        toast_msg = f"Scan completed with {len(result.errors)} errors"
+        toast_type = "error"
+    else:
+        toast_msg = f"Scan completed successfully, found {result.total_items_found} resources"
+        toast_type = "success"
+
+    return content, Toast(toast_msg, typ=toast_type)
 
 def run():
     serve()
