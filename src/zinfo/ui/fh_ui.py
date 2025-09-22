@@ -48,7 +48,7 @@ def index():
                 cls="form-group", id="custom-depth-group", style="display:none;"
             ),
             Div(
-                Button("Scan", type="submit", id="scan-btn", disabled=True),
+                Button("Start Scan", type="submit", id="scan-btn", disabled=True),
                 Small("Button enabled when form is valid", id="scan-help"),
                 cls="form-group"
             ),
