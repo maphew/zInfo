@@ -43,7 +43,7 @@ def index():
     return Titled("zInfo UI", Container(form, results_div))
 
 @rt("/search")
-def search(title: str = "", author: str = "", type: str = "", id: str = ""):
+def search(request, title: str = "", author: str = "", type: str = "", id: str = ""):
     db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
     cache = Cache(Path(db_path))
 
@@ -79,8 +79,6 @@ def search(title: str = "", author: str = "", type: str = "", id: str = ""):
         content = table
 
     # Check if this is an HTMX request
-    from fasthtml.common import Request
-    request = Request()
     if request.headers.get("HX-Request"):
         return content
     else:
