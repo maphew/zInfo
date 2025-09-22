@@ -276,6 +276,11 @@ def test_scan_bad_root_path(temp_db):
         else:
             os.environ.pop("ZINFO_DB_PATH", None)
 
+def test_import_run():
+    """Test that run symbol can be imported without side effects."""
+    from zinfo.ui.fh_ui import run
+    assert callable(run)
+
 def test_404_handler():
     """Test 404 handler returns expected content."""
     client = TestClient(app)
