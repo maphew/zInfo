@@ -5,6 +5,7 @@
 - SQLite caching system implemented with search capabilities.
 - Comprehensive error handling and logging throughout the system.
 - **GUI implementation completed** with NullUI for headless/CLI-only usage.
+- **FastHTML UI development in progress**: Iteration 1 completed (read-only browse of all cached resources).
 
 ## Recent Changes
 - Completed removal of legacy HTML generation scripts (envapplist.py, envmapplist.py) and migration to modular scanner architecture.
