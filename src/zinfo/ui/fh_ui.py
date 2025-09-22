@@ -279,6 +279,7 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: int = None):
 @click.command()
 @click.option('--host', default='0.0.0.0', help='Host to bind the server to.')
 @click.option('--port', default=5001, type=int, help='Port to bind the server to.')
-def run(host, port):
+@click.option('--reload/--no-reload', default=True, is_flag=True, help='Enable live reload')
+def run(host, port, reload):
     """Start the zInfo FastHTML web UI server."""
-    uvicorn.run(app, host=host, port=port)
+    uvicorn.run('zinfo.ui.fh_ui:app', host=host, port=port, reload=reload)
