@@ -5,6 +5,8 @@ from pathlib import Path
 from zinfo.core.cache import Cache
 from zinfo.core.scanner import ZinfoScanner
 import os
+import uvicorn
+import click
 
 app, rt = fast_app(htmx=True, pico=True)
 setup_toasts(app)
@@ -165,5 +167,9 @@ def scan(root: str = ".", depth: int = 5):
 
     return content, Toast(toast_msg, typ=toast_type)
 
-def run():
-    serve()
+@click.command()
+@click.option('--host', default='0.0.0.0', help='Host to bind the server to.')
+@click.option('--port', default=5001, type=int, help='Port to bind the server to.')
+def run(host, port):
+    """Start the zInfo FastHTML web UI server."""
+    uvicorn.run(app, host=host, port=port)
