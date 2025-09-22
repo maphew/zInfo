@@ -82,7 +82,7 @@ def test_index_empty(temp_db):
         client = TestClient(app)
         response = client.get("/")
         assert response.status_code == 200
-        assert "zInfo UI" in response.text
+        assert "zInfo" in response.text
         assert "No cached resources found" in response.text
     finally:
         if old_env is not None:
@@ -141,7 +141,7 @@ def test_index_with_resources(seeded_cache, temp_db):
         client = TestClient(app)
         response = client.get("/")
         assert response.status_code == 200
-        assert "zInfo UI" in response.text
+        assert "zInfo" in response.text
         assert "Python Project" in response.text
         assert "JavaScript App" in response.text
         assert "User Manual" in response.text
@@ -243,7 +243,7 @@ contact: test@example.com
         try:
             client = TestClient(app)
             # POST /scan
-            response = client.post("/scan", data={"root": temp_root, "depth": 5})
+            response = client.post("/scan", data={"root": temp_root, "profile": "deep"})
             assert response.status_code == 200
             assert "Test Project" in response.text
             assert "zinfo_project" in response.text
@@ -266,7 +266,7 @@ def test_scan_bad_root_path(temp_db):
 
     try:
         client = TestClient(app)
-        response = client.post("/scan", data={"root": "/nonexistent/path", "depth": 5})
+        response = client.post("/scan", data={"root": "/nonexistent/path", "profile": "deep"})
         assert response.status_code == 200
         assert "error" in response.text.lower()  # Check for error toast
         assert "Scan completed with" in response.text

@@ -22,24 +22,71 @@ def index():
     cache = Cache(Path(db_path))
     resources = cache.get_all_resources()
 
+    # Scan form with redesigned inputs
     scan_form = Form(
-        Input(name="root", placeholder="Root directory", value="."),
-        Input(name="depth", type="number", value=5),
-        Button("Scan", type="submit"),
+        Fieldset(
+            Legend("Scan Configuration"),
+            Div(
+                Label("Target Directory", Input(id="root", name="root", placeholder=".", required=True, aria_describedby="root-help")),
+                Small("Enter the root directory to scan. Examples: . (current), /home/projects, C:\\Projects", id="root-help"),
+                cls="form-group"
+            ),
+            Div(
+                Label("Scan Profile", Select(
+                    Option("Quick", value="quick"),
+                    Option("Standard", value="standard"),
+                    Option("Deep", value="deep"),
+                    Option("Custom", value="custom"),
+                    id="profile", name="profile", onchange="updateProfile()"
+                )),
+                Small("Quick: 1 level deep, Standard: 3 levels, Deep: 5 levels, Custom: specify depth", id="profile-help"),
+                cls="form-group"
+            ),
+            Div(
+                Label("Custom Depth", Input(id="custom_depth", name="custom_depth", type="number", min="1", max="10", style="display:none;", aria_describedby="depth-help")),
+                Small("Specify scan depth (1-10 levels)", id="depth-help"),
+                cls="form-group", id="custom-depth-group", style="display:none;"
+            ),
+            Div(
+                Button("Scan", type="submit", id="scan-btn", disabled=True),
+                Small("Button enabled when form is valid", id="scan-help"),
+                cls="form-group"
+            ),
+            id="scan-errors", cls="error-messages", style="display:none;"
+        ),
         hx_post="/scan",
         hx_target="#results",
-        hx_swap="innerHTML"
+        hx_swap="innerHTML",
+        id="scan-form",
+        onsubmit="return validateScanForm()"
     )
 
-    form = Form(
-        Input(name="title", placeholder="Title"),
-        Input(name="author", placeholder="Author"),
-        Input(name="type", placeholder="Type"),
-        Input(name="id", placeholder="ID"),
-        Button("Search", type="submit"),
+    # Search form with labels
+    search_form = Form(
+        Fieldset(
+            Legend("Search Resources"),
+            Div(
+                Label("Title", Input(name="title", placeholder="Search by title")),
+                cls="form-group"
+            ),
+            Div(
+                Label("Author", Input(name="author", placeholder="Search by author")),
+                cls="form-group"
+            ),
+            Div(
+                Label("Type", Input(name="type", placeholder="Search by type")),
+                cls="form-group"
+            ),
+            Div(
+                Label("ID", Input(name="id", placeholder="Search by ID")),
+                cls="form-group"
+            ),
+            Button("Search", type="submit")
+        ),
         hx_get="/search",
         hx_target="#results",
-        hx_swap="innerHTML"
+        hx_swap="innerHTML",
+        cls="search-form"
     )
 
     if not resources:
@@ -60,7 +107,62 @@ def index():
         )
         results_div = Div(table, id="results")
 
-    return Titled("zInfo UI", Container(scan_form, form, results_div, Div(id="detail")))
+    return Titled("zInfo",
+        P("Scan directories for project metadata files and browse indexed resources"),
+        Container(
+            scan_form,
+            search_form,
+            results_div,
+            Div(id="detail"),
+            Script("""
+                function updateProfile() {
+                    const profile = document.getElementById('profile').value;
+                    const customGroup = document.getElementById('custom-depth-group');
+                    const customInput = document.getElementById('custom_depth');
+                    if (profile === 'custom') {
+                        customGroup.style.display = 'block';
+                        customInput.style.display = 'block';
+                        customInput.required = true;
+                    } else {
+                        customGroup.style.display = 'none';
+                        customInput.style.display = 'none';
+                        customInput.required = false;
+                    }
+                    validateScanForm();
+                }
+
+                function validateScanForm() {
+                    const root = document.getElementById('root').value.trim();
+                    const profile = document.getElementById('profile').value;
+                    const customDepth = document.getElementById('custom_depth');
+                    const btn = document.getElementById('scan-btn');
+                    const errors = document.getElementById('scan-errors');
+
+                    let isValid = root !== '';
+                    if (profile === 'custom') {
+                        isValid = isValid && customDepth.value && parseInt(customDepth.value) >= 1;
+                    }
+
+                    btn.disabled = !isValid;
+
+                    if (!isValid) {
+                        errors.textContent = 'Please fill in all required fields.';
+                        errors.style.display = 'block';
+                    } else {
+                        errors.style.display = 'none';
+                    }
+
+                    return isValid;
+                }
+
+                document.getElementById('root').addEventListener('input', validateScanForm);
+                document.getElementById('custom_depth').addEventListener('input', validateScanForm);
+
+                // Initial validation
+                validateScanForm();
+            """)
+        )
+    )
 
 @rt("/search")
 def search(request, title: str = "", author: str = "", type: str = "", id: str = ""):
@@ -129,9 +231,16 @@ def detail(request, id: str):
         return Titled("zInfo UI - Detail", Container(content))
 
 @rt("/scan", methods=["POST"])
-def scan(root: str = ".", depth: int = 5):
+def scan(root: str = ".", profile: str = "standard", custom_depth: int = None):
     db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
     cache = Cache(Path(db_path))
+
+    # Determine depth based on profile
+    if profile == "custom":
+        depth = custom_depth if custom_depth is not None else 5
+    else:
+        depth_map = {"quick": 1, "standard": 3, "deep": 5}
+        depth = depth_map.get(profile, 5)
 
     scanner = ZinfoScanner(Path(root), cache, max_depth=depth)
     result = scanner.scan()
