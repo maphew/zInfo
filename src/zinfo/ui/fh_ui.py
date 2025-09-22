@@ -49,7 +49,8 @@ def index():
                 style="display:none;"
             ),
         ),
-        Button("Start Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#results", hx_swap="innerHTML"),
+        Button("Start Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
+        Div(id="scan-status"),
         Small("Button enabled when target directory and scan profile have been set", id="scan-help"),
         Div(
             Div(
@@ -274,11 +275,16 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
     if result.errors:
         toast_msg = f"Scan completed with {len(result.errors)} errors"
         toast_type = "error"
+        status_msg = f"Scan completed with {len(result.errors)} errors, found {result.total_items_found} resources"
     else:
         toast_msg = f"Scan completed successfully, found {result.total_items_found} resources"
         toast_type = "success"
+        status_msg = toast_msg
 
-    return content, Toast(toast_msg, typ=toast_type)
+    status_div = Div(status_msg, id="scan-status")
+    results_div = Div(content, id="results", hx_swap_oob="innerHTML")
+
+    return status_div, results_div, Toast(toast_msg, typ=toast_type)
 
 @click.command()
 @click.option('--host', default='0.0.0.0', help='Host to bind the server to.')
