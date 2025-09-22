@@ -1,6 +1,7 @@
 from fasthtml.common import *
 from pathlib import Path
 from zinfo.core.cache import Cache
+from zinfo.core.scanner import ZinfoScanner
 import os
 
 app, rt = fast_app(htmx=True, pico=True)
@@ -10,6 +11,15 @@ def index():
     db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
     cache = Cache(Path(db_path))
     resources = cache.get_all_resources()
+
+    scan_form = Form(
+        Input(name="root", placeholder="Root directory", value="."),
+        Input(name="depth", type="number", value=5),
+        Button("Scan", type="submit"),
+        hx_post="/scan",
+        hx_target="#results",
+        hx_swap="innerHTML"
+    )
 
     form = Form(
         Input(name="title", placeholder="Title"),
@@ -40,7 +50,7 @@ def index():
         )
         results_div = Div(table, id="results")
 
-    return Titled("zInfo UI", Container(form, results_div, Div(id="detail")))
+    return Titled("zInfo UI", Container(scan_form, form, results_div, Div(id="detail")))
 
 @rt("/search")
 def search(request, title: str = "", author: str = "", type: str = "", id: str = ""):
@@ -107,6 +117,37 @@ def detail(request, id: str):
         return content
     else:
         return Titled("zInfo UI - Detail", Container(content))
+
+@rt("/scan", methods=["POST"])
+def scan(root: str = ".", depth: int = 5):
+    db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
+    cache = Cache(Path(db_path))
+
+    scanner = ZinfoScanner(Path(root), cache, max_depth=depth)
+    result = scanner.scan()
+
+    # Return updated table content
+    resources = cache.get_all_resources()
+
+    if not resources:
+        content = P("No cached resources found.")
+    else:
+        table_rows = [
+            Tr(
+                Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
+                Td(resource.metadata_type),
+                Td(resource.id),
+                Td(resource.link)
+            ) for resource in resources
+        ]
+
+        table = Table(
+            Thead(Tr(Th("Title"), Th("Type"), Th("ID"), Th("Path"))),
+            Tbody(*table_rows)
+        )
+        content = table
+
+    return content
 
 def run():
     serve()

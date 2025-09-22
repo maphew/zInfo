@@ -222,3 +222,39 @@ def test_detail_not_found(seeded_cache, temp_db):
             os.environ["ZINFO_DB_PATH"] = old_env
         else:
             os.environ.pop("ZINFO_DB_PATH", None)
+
+def test_scan_post_updates_index(temp_db):
+    """Test POST /scan updates index and GET / shows new entries."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_root:
+        # Create subdir with zinfo.txt
+        subdir = Path(temp_root) / "test_project"
+        subdir.mkdir()
+        zinfo_file = subdir / "zinfo.txt"
+        zinfo_file.write_text("""title: Test Project
+type: project
+contact: test@example.com
+""")
+
+        old_env = os.environ.get("ZINFO_DB_PATH")
+        os.environ["ZINFO_DB_PATH"] = str(temp_db)
+
+        try:
+            client = TestClient(app)
+            # POST /scan
+            response = client.post("/scan", data={"root": temp_root, "depth": 5})
+            assert response.status_code == 200
+            assert "Test Project" in response.text
+            assert "zinfo_project" in response.text
+            assert "test_project/zinfo.txt" in response.text
+
+            # GET / shows the new entry
+            response2 = client.get("/")
+            assert response2.status_code == 200
+            assert "Test Project" in response2.text
+        finally:
+            if old_env is not None:
+                os.environ["ZINFO_DB_PATH"] = old_env
+            else:
+                os.environ.pop("ZINFO_DB_PATH", None)
