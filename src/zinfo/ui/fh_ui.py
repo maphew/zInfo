@@ -49,7 +49,7 @@ def index():
                 style="display:none;"
             ),
         ),
-        Button("Start Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-results", hx_swap="innerHTML"),
+        Button("Start Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#results", hx_swap="innerHTML"),
         Small("Button enabled when target directory and scan profile have been set", id="scan-help"),
         Div(
             Div(
