@@ -27,7 +27,7 @@ def index():
         Fieldset(
             Legend("Scan Configuration"),
             Div(
-                Label("Target Directory", Input(id="root", name="root", placeholder=".", required=True, aria_describedby="root-help")),
+                Label("Target Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
                 Small("Enter the root directory to scan. Examples: . (current), /home/projects, C:\\Projects", id="root-help"),
                 cls="form-group"
             ),
@@ -43,24 +43,28 @@ def index():
                 cls="form-group"
             ),
             Div(
-                Label("Custom Depth", Input(id="custom_depth", name="custom_depth", type="number", min="1", max="10", style="display:none;", aria_describedby="depth-help")),
+                Label("Custom Depth", Input(id="custom_depth", name="custom_depth", type="number", min="1", max="10", style="display:none;", aria_describedby="depth-help"),
                 Small("Specify scan depth (1-10 levels)", id="depth-help"),
-                cls="form-group", id="custom-depth-group", style="display:none;"
+                cls="form-group", id="custom-depth-group",
+                style="display:none;"
+            ),
+        ),
+        Button("Start Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-results", hx_swap="innerHTML"),
+        Small("Button enabled when target directory and scan profile have been set", id="scan-help"),
+        Div(
+            Div(
+                id="scan-errors", cls="error-messages", style="display:none;"
             ),
             Div(
-                Button("Start Scan", type="submit", id="scan-btn", disabled=True),
-                Small("Button enabled when form is valid", id="scan-help"),
-                cls="form-group"
+                id="scan-success", cls="success-messages", style="display:none;"
             ),
-            id="scan-errors", cls="error-messages", style="display:none;"
+            id="scan-results",
+            cls="scan-results"
         ),
-        hx_post="/scan",
-        hx_target="#results",
-        hx_swap="innerHTML",
+        cls="form-group",
         id="scan-form",
         onsubmit="return validateScanForm()"
-    )
-
+    ))
     # Search form with labels
     search_form = Form(
         Fieldset(
@@ -231,7 +235,7 @@ def detail(request, id: str):
         return Titled("zInfo UI - Detail", Container(content))
 
 @rt("/scan", methods=["POST"])
-def scan(root: str = ".", profile: str = "standard", custom_depth: int = None):
+def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int] = None):
     db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
     cache = Cache(Path(db_path))
 
