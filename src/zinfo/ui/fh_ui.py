@@ -107,7 +107,7 @@ index_cache = TTLCache(INDEX_CACHE_TTL)  # Cache for main index page results
 search_cache = TTLCache(SEARCH_CACHE_TTL)  # Cache for search results (shorter TTL due to dynamic queries)
 
 app, rt = fast_app(htmx=True, pico=True)
-app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 setup_toasts(app)
 
 def validate_scan_params(root, profile, custom_depth):
@@ -224,7 +224,7 @@ def render_pagination(current_page: int, limit: int, total_count: int, base_url:
     prev_page = current_page - 1 if current_page > 1 else None
     next_page = current_page + 1 if current_page < total_pages else None
 
-    pagination = Div(cls="pagination")
+    pagination = Div()
     if prev_page:
         # HTMX GET request updates only the #results div
         pagination.append(Button("Previous", hx_get=f"{base_url}?page={prev_page}&limit={limit}{extra_params}", hx_target="#results", hx_swap="innerHTML"))
@@ -277,6 +277,12 @@ def build_resource_table(resources, total_count=None, page=DEFAULT_PAGE, limit=D
     else:
         return table
 
+@rt("/liststatic")
+def liststatic():
+    import os
+    path = Path(__file__).parent / "static"
+    return str(list(path.iterdir()))
+
 @app.exception_handler(404)
 def not_found(request, exc):
     """
@@ -290,7 +296,7 @@ def not_found(request, exc):
         HTMLResponse with 404 page content
     """
     content = to_xml(Titled("404 - Page Not Found", Container(H1("404"), P("The page you requested was not found."))))
-    return HTMLResponse(content)
+    return HTMLResponse(content, status_code=404)
 
 @app.exception_handler(Exception)
 def internal_error(request, exc):
@@ -355,75 +361,51 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
     search_form = Form(
         Fieldset(
             Legend("Search Resources"),
-            Div(
-                Label("Title", Input(name="title", placeholder="Search by title")),
-                cls="form-group"
-            ),
-            Div(
-                Label("Author", Input(name="author", placeholder="Search by author")),
-                cls="form-group"
-            ),
-            Div(
-                Label("Type", Input(name="type", placeholder="Search by type")),
-                cls="form-group"
-            ),
-            Div(
-                Label("ID", Input(name="id", placeholder="Search by ID")),
-                cls="form-group"
-            ),
+            Label("Title", Input(name="title", placeholder="Search by title")),
+            Label("Author", Input(name="author", placeholder="Search by author")),
+            Label("Type", Input(name="type", placeholder="Search by type")),
+            Label("ID", Input(name="id", placeholder="Search by ID")),
             Button("Search", type="submit")
         ),
         hx_get="/search",
         hx_target="#results",
-        hx_swap="innerHTML",
-        cls="search-form"
+        hx_swap="innerHTML"
     )
-    # Compact scan form with horizontal layout
+    # Scan form
     scan_form = Form(
-        Div(
-            Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help", cls="compact-input")),
+        Fieldset(
+            Legend("Scan Directory"),
+            Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
             Label("Profile", Select(
                 Option("Quick", value="quick"),
                 Option("Standard", value="standard"),
                 Option("Deep", value="deep"),
                 Option("Custom", value="custom"),
-                id="profile", name="profile", onchange="updateProfile()", cls="compact-select"
+                id="profile", name="profile", onchange="updateProfile()"
             )),
-            Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", style="display:none;", aria_describedby="depth-help", cls="compact-input"),
-            Button("Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML", cls="compact-btn"),
-            cls="scan-form-row"
+            Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", aria_describedby="depth-help"),
+            Button("Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
         ),
-        Div(id="scan-status", cls="status-text"),
+        Div(id="scan-status"),
         Div(
-            Div(id="scan-errors", cls="error-messages", style="display:none;"),
-            Div(id="scan-success", cls="success-messages", style="display:none;"),
-            id="scan-results", cls="scan-results"
+            Div(id="scan-errors"),
+            Div(id="scan-success"),
+            id="scan-results"
         ),
         id="scan-form",
-        onsubmit="return validateScanForm()",
-        cls="compact-scan-form"
+        onsubmit="return validateScanForm()"
     )
 
     table_content = build_resource_table(resources, total_count, page, limit, "/", "", "No cached resources found.")
     results_div = Div(table_content, id="results")
 
-    return Titled("zInfo",
+    return Titled(
+        "zInfo",
         P("Scan directories for project metadata files and browse indexed resources"),
-        Link(rel="stylesheet", href="/static/style.css"),
-        Div(
-            Div(
-                Div(search_form, cls="search-centered"),
-                Div(scan_form, cls="scan-right"),
-                cls="header-area"
-            ),
-            Div(
-                Div(results_div, cls="results-card"),
-                Div(id="detail", cls="detail-card"),
-                cls="main-content"
-            ),
-            cls="main-grid"
-        ),
-        Script(src="/static/script.js")
+        Grid(search_form, scan_form),
+        Card(results_div),
+        Card(Div(id="detail")),
+        Script(src="/static/script.js"),
     )
 
 @rt("/search")
