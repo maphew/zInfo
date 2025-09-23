@@ -22,7 +22,7 @@ dev = [
 [project.scripts]
 zinfo = "zinfo.cli:main"
 zinfo-gui = "zinfo.ui.main:main"
-zinfo-web = "zinfo.ui.fh_ui:run"
+zinfo-web = "zinfo.ui.fh_ui:run_server"
 
 [project.urls]
 Homepage = "https://github.com/maphew/zinfo"

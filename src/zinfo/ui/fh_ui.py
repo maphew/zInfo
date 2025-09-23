@@ -7,6 +7,8 @@ import re
 import logging
 import time
 from typing import Any, Tuple, List, Optional
+import click
+import uvicorn
 
 # Constants
 # Scan profiles define preset depth levels for directory scanning
@@ -556,4 +558,15 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
 
 def run_server(host=DEFAULT_HOST, port=DEFAULT_PORT, reload=True):
     """Start the zInfo FastHTML web UI server."""
-    serve(host=host, port=port, reload=reload)
+    uvicorn.run('zinfo.ui.fh_ui:app', host=host, port=port, reload=reload)
+
+@click.command()
+@click.option("--host", default=DEFAULT_HOST, help="Host to bind to")
+@click.option("--port", type=int, default=DEFAULT_PORT, help="Port to bind to")
+@click.option("--reload", is_flag=True, default=True, help="Enable live reload")
+@click.option("--verbose", is_flag=True, help="Enable verbose logging")
+def run(host, port, reload, verbose):
+    """Start the zInfo FastHTML web UI server."""
+    if verbose:
+        logging.basicConfig(level=logging.INFO)
+    run_server(host=host, port=port, reload=reload)
