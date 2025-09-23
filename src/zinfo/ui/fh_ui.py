@@ -18,10 +18,39 @@ def not_found(request, exc):
 
 @rt("/")
 def index():
+    import logging
+    logging.info("Rendering index: search_form defined first, then scan_form. Container order: scan_form, search_form")
     db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
     cache = Cache(Path(db_path))
     resources = cache.get_all_resources()
 
+    # Search form with labels
+    search_form = Form(
+        Fieldset(
+            Legend("Search Resources"),
+            Div(
+                Label("Title", Input(name="title", placeholder="Search by title")),
+                cls="form-group"
+            ),
+            Div(
+                Label("Author", Input(name="author", placeholder="Search by author")),
+                cls="form-group"
+            ),
+            Div(
+                Label("Type", Input(name="type", placeholder="Search by type")),
+                cls="form-group"
+            ),
+            Div(
+                Label("ID", Input(name="id", placeholder="Search by ID")),
+                cls="form-group"
+            ),
+            Button("Search", type="submit")
+        ),
+        hx_get="/search",
+        hx_target="#results",
+        hx_swap="innerHTML",
+        cls="search-form"
+    )
     # Scan form with redesigned inputs
     scan_form = Form(
         Fieldset(
@@ -66,33 +95,6 @@ def index():
         id="scan-form",
         onsubmit="return validateScanForm()"
     ))
-    # Search form with labels
-    search_form = Form(
-        Fieldset(
-            Legend("Search Resources"),
-            Div(
-                Label("Title", Input(name="title", placeholder="Search by title")),
-                cls="form-group"
-            ),
-            Div(
-                Label("Author", Input(name="author", placeholder="Search by author")),
-                cls="form-group"
-            ),
-            Div(
-                Label("Type", Input(name="type", placeholder="Search by type")),
-                cls="form-group"
-            ),
-            Div(
-                Label("ID", Input(name="id", placeholder="Search by ID")),
-                cls="form-group"
-            ),
-            Button("Search", type="submit")
-        ),
-        hx_get="/search",
-        hx_target="#results",
-        hx_swap="innerHTML",
-        cls="search-form"
-    )
 
     if not resources:
         results_div = Div(P("No cached resources found."), id="results")
@@ -115,8 +117,8 @@ def index():
     return Titled("zInfo",
         P("Scan directories for project metadata files and browse indexed resources"),
         Container(
-            scan_form,
             search_form,
+            scan_form,
             results_div,
             Div(id="detail"),
             Script("""
