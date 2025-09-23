@@ -284,9 +284,9 @@ def test_scan_bad_root_path(temp_db):
             os.environ.pop("ZINFO_DB_PATH", None)
 
 def test_import_run():
-    """Test that run symbol can be imported without side effects."""
-    from zinfo.ui.fh_ui import run
-    assert callable(run)
+    """Test that run_server symbol can be imported without side effects."""
+    from zinfo.ui.fh_ui import run_server
+    assert callable(run_server)
 
 def test_404_handler():
     """Test 404 handler returns expected content."""
@@ -616,17 +616,18 @@ def test_scan_invalid_params():
 def test_500_error_handler():
     """Test 500 error handler for unhandled exceptions."""
     from zinfo.ui.fh_ui import internal_error
-    from starlette.requests import Request
-    from starlette.responses import Response
 
     # Create a mock request
-    request = Request(scope={"type": "http", "method": "GET", "path": "/test"})
+    request = None  # FastHTML exception handlers don't use the request parameter
 
-    # Test the error handler
-    response = internal_error(request, Exception("Test error"))
-    assert response.status_code == 500
-    assert "500" in response.body.decode()
-    assert "Internal Server Error" in response.body.decode()
+    # Test the error handler - it should return FT components
+    result = internal_error(request, Exception("Test error"))
+    
+    # The result should be a Titled component with the error content
+    from fasthtml.common import to_xml
+    html_content = to_xml(result)
+    assert "500" in html_content
+    assert "Internal Server Error" in html_content
 
 # Cache behavior tests
 

@@ -1,18 +1,12 @@
 from fasthtml.common import *
-from starlette.responses import HTMLResponse
-from starlette.exceptions import HTTPException
-from starlette.staticfiles import StaticFiles
-from fasthtml.common import Toast, to_xml
 from pathlib import Path
 from zinfo.core.cache import Cache
 from zinfo.core.scanner import ZinfoScanner
 import os
-import uvicorn
-import click
 import re
 import logging
 import time
-from typing import Any, Tuple, List
+from typing import Any, Tuple, List, Optional
 
 # Constants
 # Scan profiles define preset depth levels for directory scanning
@@ -106,7 +100,14 @@ class TTLCache:
 index_cache = TTLCache(INDEX_CACHE_TTL)  # Cache for main index page results
 search_cache = TTLCache(SEARCH_CACHE_TTL)  # Cache for search results (shorter TTL due to dynamic queries)
 
-app, rt = fast_app(htmx=True, pico=True)
+def not_found(req, exc):
+    return Titled("404 - Page Not Found", H1("404"), P("The page you requested was not found."))
+
+def internal_error(req, exc):
+    logging.error(f"Internal server error: {exc}", exc_info=True)
+    return Titled("500 - Internal Server Error", H1("500"), P("An internal server error occurred. Please try again later."))
+
+app, rt = fast_app(htmx=True, pico=True, exception_handlers={404: not_found, 500: internal_error})
 
 # todo: remove this
 # app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
@@ -281,39 +282,6 @@ def build_resource_table(resources, total_count=None, page=DEFAULT_PAGE, limit=D
     else:
         return table
 
-@app.exception_handler(404)
-def not_found(request, exc):
-    """
-    Handle 404 Not Found errors with a user-friendly page.
-
-    Args:
-        request: The incoming request that caused the 404
-        exc: The HTTPException instance
-
-    Returns:
-        HTMLResponse with 404 page content
-    """
-    content = to_xml(Titled("404 - Page Not Found", Container(H1("404"), P("The page you requested was not found."))))
-    return HTMLResponse(content, status_code=404)
-
-@app.exception_handler(Exception)
-def internal_error(request, exc):
-    """
-    Handle unexpected server errors with logging and user-friendly response.
-
-    Logs the full exception details for debugging while showing a generic
-    error message to users.
-
-    Args:
-        request: The incoming request that caused the error
-        exc: The exception that occurred
-
-    Returns:
-        HTMLResponse with 500 error page
-    """
-    logging.error(f"Internal server error: {exc}", exc_info=True)
-    content = to_xml(Titled("500 - Internal Server Error", Container(H1("500"), P("An internal server error occurred. Please try again later."))))
-    return HTMLResponse(content, status_code=500)
 
 @rt("/")
 def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
@@ -470,7 +438,7 @@ def search(request, title: str = "", author: str = "", type: str = "", id: str =
     if request.headers.get("HX-Request"):
         return content
     else:
-        return Titled("zInfo UI", Container(content))
+        return Titled("zInfo UI", content)
 
 @rt("/detail")
 def detail(request, id: str):
@@ -518,7 +486,7 @@ def detail(request, id: str):
     if request.headers.get("HX-Request"):
         return content
     else:
-        return Titled("zInfo UI - Detail", Container(content))
+        return Titled("zInfo UI - Detail", content)
 
 @rt("/scan", methods=["POST"])
 def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int] = None):
@@ -586,20 +554,6 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
 
     return status_div, results_div, Toast(toast_msg, typ=toast_type)
 
-@click.command()
-@click.option('--host', default=DEFAULT_HOST, help='Host to bind the server to.')
-@click.option('--port', default=DEFAULT_PORT, type=int, help='Port to bind the server to.')
-@click.option('--reload/--no-reload', default=True, is_flag=True, help='Enable live reload during development.')
-def run(host, port, reload):
-    """
-    Start the zInfo FastHTML web UI server.
-
-    Launches the web interface for browsing and searching indexed project metadata.
-    The server provides HTMX-powered dynamic updates for search, pagination, and scanning.
-
-    Args:
-        host: Host address to bind the server to (default: 0.0.0.0)
-        port: Port number to bind the server to (default: 5001)
-        reload: Enable auto-reload on code changes for development (default: True)
-    """
-    uvicorn.run('zinfo.ui.fh_ui:app', host=host, port=port, reload=reload)
+def run_server(host=DEFAULT_HOST, port=DEFAULT_PORT, reload=True):
+    """Start the zInfo FastHTML web UI server."""
+    serve(host=host, port=port, reload=reload)
