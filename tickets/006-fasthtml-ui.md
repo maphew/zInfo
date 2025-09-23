@@ -15,6 +15,8 @@ Implement a FastHTML-based web UI for zInfo that provides browseable, filterable
 ## Sub-issues
 None yet.
 
+## Status: Closed
+
 ## Notes
 Iteration 0 completed: basic FastHTML app structure with index route and smoke test passing.
 Started with Iteration 0: basic app structure and smoke test.
@@ -24,3 +26,5 @@ Iteration 3 completed: Resource details drawer with HTMX. Added /detail route th
 Iteration 4 completed: added /scan route with root and depth params (defaults match CLI), calling scan flow from scanner.py and persisting via cache, added scan form on index, and updated tests. No discrepancies with CLI options/signatures noted.
 Iteration 5 completed: Added toast notifications for scan success/error, 404 error page. Edge cases: bad root path triggers error toast, invalid routes show 404 page.
 Iteration 6 completed: Added console_script 'zinfo-web' pointing to run() in fh_ui.py. MVP complete with all core UI functionality implemented. Follow-ups: Add port/host configuration options to run() function for production deployment.
+
+All UI tests passing (72/72). FastHTML UI implementation complete and ready for production.

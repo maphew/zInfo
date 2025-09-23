@@ -6,6 +6,7 @@
 - Comprehensive error handling and logging throughout the system.
 - **GUI implementation completed** with NullUI for headless/CLI-only usage.
 - **FastHTML UI MVP completed**: Full browseable, filterable, searchable interface with in-app scan trigger.
+- **Pagination implemented** for /index and /search routes with HTMX dynamic loading, page/limit parameters, and validation.
 
 ## Recent Changes
 - Completed removal of legacy HTML generation scripts (envapplist.py, envmapplist.py) and migration to modular scanner architecture.
@@ -20,6 +21,9 @@
 - **Removed Toga-specific GUI implementation** (toga_app.py, toga_components.py, test_toga_components.py) and updated main.py to use NullUI as the default.
 - Removed debug_gui_test.py and cleaned up framework selection mechanism in main.py to explicitly default to NullUI.
 - **Implemented new UI layout for FastHTML UI**: Restructured with CSS Grid, compact scan form in upper right, centered search form, enhanced styling with professional color scheme, card-based design, and responsive layout for mobile/tablet/desktop.
+- **Implemented in-memory caching for FastHTML UI database queries** with TTL (30s for index, 10s for search) and cache invalidation on scan operations.
+- Refactored FastHTML UI to use constants for hardcoded values (scan profiles, depths, pagination defaults, cache TTLs, etc.).
+- **Created comprehensive security documentation** for FastHTML UI explaining authentication, access control, input validation, path traversal prevention, and deployment considerations.
 
 ## Next Steps
 - Add project initiation tools to create boilerplate folders and metadata files.

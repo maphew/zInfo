@@ -20,6 +20,10 @@
 - **Testing**: `uv run pytest` (pytest with coverage)
 - **Database**: SQLite file (default: zinfo.db) created on first scan
 
+## Tickets
+- When you discover an issue, immediately update `tickets/` with your findings using a subagent. When the issue is resolved, update `tickets/` and mark closed.
+- When the tests pass, update `tickets/`, then add changed code and ticket with "git add -A" via bash, then do a "git commit" with a message that describes the changes you made to the code. After the commit, do a "git push" to push the changes to the remote repository.
+
 ## Technical Constraints
 - **Platform**: Primarily Windows-focused (UNC paths, file:/// links in legacy), but uses pathlib for cross-platform compatibility
 - **Metadata Formats**: Currently zinfo.txt (key-value); extensible via BaseScanner subclasses
@@ -30,6 +34,7 @@
 From pyproject.toml:
 - click (CLI)
 - pytest, pytest-cov (testing)
+- fasthtml (web-ui)
 
 Runtime: Standard library (datetime, json, os, logging, sqlite3)
 

@@ -1,5 +1,7 @@
 from fasthtml.common import *
 from starlette.responses import HTMLResponse
+from starlette.exceptions import HTTPException
+from starlette.staticfiles import StaticFiles
 from fasthtml.common import Toast, to_xml
 from pathlib import Path
 from zinfo.core.cache import Cache
@@ -7,22 +9,347 @@ from zinfo.core.scanner import ZinfoScanner
 import os
 import uvicorn
 import click
+import re
+import logging
+import time
+from typing import Any, Tuple, List
+
+# Constants
+# Scan profiles define preset depth levels for directory scanning
+SCAN_PROFILES = {'quick', 'standard', 'deep', 'custom'}
+# Depth mappings for each scan profile (quick=1 level, standard=3, deep=5)
+PROFILE_DEPTHS = {"quick": 1, "standard": 3, "deep": 5}
+# Default pagination settings
+DEFAULT_PAGE = 1
+DEFAULT_LIMIT = 50
+# Maximum allowed limit for pagination to prevent excessive memory usage
+MAX_LIMIT = 1000
+# TTL for index page cache in seconds (30s balances freshness with performance)
+INDEX_CACHE_TTL = 30
+# TTL for search results cache in seconds (shorter due to dynamic queries)
+SEARCH_CACHE_TTL = 10
+# Default scan depth when no profile specified
+DEFAULT_DEPTH = 5
+# Maximum allowed scan depth to prevent runaway scans
+MAX_DEPTH = 10
+# Maximum length for search parameters to prevent abuse
+MAX_SEARCH_PARAM_LENGTH = 100
+# Regex pattern for validating search parameters (alphanumeric, spaces, hyphens, underscores, dots)
+SEARCH_PARAM_PATTERN = re.compile(r'^[a-zA-Z0-9\s\-_.]*$')
+# Default server binding settings
+DEFAULT_HOST = '0.0.0.0'
+DEFAULT_PORT = 5001
+# Default SQLite database path (can be overridden via ZINFO_DB_PATH env var)
+DEFAULT_DB_PATH = "zinfo.db"
+
+
+
+class TTLCache:
+    """
+    Simple in-memory cache with TTL (time-to-live) for performance optimization.
+
+    This cache stores key-value pairs with automatic expiration based on time.
+    Used to reduce database queries for frequently accessed data like index listings
+    and search results. Thread-safety is not implemented as FastHTML is single-threaded.
+
+    Design decision: Simple dict-based cache instead of external cache (Redis/memcached)
+    to keep dependencies minimal and avoid complexity for a single-user application.
+    """
+
+    def __init__(self, ttl_seconds: int):
+        """
+        Initialize the cache with a TTL.
+
+        Args:
+            ttl_seconds: Time-to-live in seconds for cached items
+        """
+        self.ttl = ttl_seconds
+        self.cache: dict[Any, Tuple[Any, float]] = {}
+
+    def get(self, key: Any) -> Any:
+        """
+        Retrieve a value from cache if not expired.
+
+        Args:
+            key: Cache key to look up
+
+        Returns:
+            Cached value if found and not expired, None otherwise
+        """
+        if key in self.cache:
+            value, timestamp = self.cache[key]
+            if time.time() - timestamp < self.ttl:
+                return value
+            else:
+                # Remove expired entry to prevent memory buildup
+                del self.cache[key]
+        return None
+
+    def set(self, key: Any, value: Any) -> None:
+        """
+        Store a value in the cache with current timestamp.
+
+        Args:
+            key: Cache key
+            value: Value to cache
+        """
+        self.cache[key] = (value, time.time())
+
+    def clear(self) -> None:
+        """Clear all cached entries. Used after data-modifying operations like scans."""
+        self.cache.clear()
+
+
+# Global cache instances
+# Separate caches for index and search to allow different TTL policies
+# Index cache has longer TTL since data changes less frequently
+index_cache = TTLCache(INDEX_CACHE_TTL)  # Cache for main index page results
+search_cache = TTLCache(SEARCH_CACHE_TTL)  # Cache for search results (shorter TTL due to dynamic queries)
 
 app, rt = fast_app(htmx=True, pico=True)
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 setup_toasts(app)
+
+def validate_scan_params(root, profile, custom_depth):
+    """
+    Validate parameters for scan operations to prevent security issues and invalid inputs.
+
+    Security: Restricts scan root to current working directory to prevent filesystem access
+    outside the allowed scope. Prevents path traversal attacks.
+
+    Args:
+        root: Root directory path for scanning
+        profile: Scan profile ('quick', 'standard', 'deep', 'custom')
+        custom_depth: Custom depth when profile is 'custom'
+
+    Raises:
+        HTTPException: For invalid paths, profiles, or depths
+    """
+    # Validate root path - resolve to absolute path and check constraints
+    try:
+        root_path = Path(root).resolve()
+    except Exception:
+        raise HTTPException(400, "Invalid root path")
+    cwd = Path.cwd()
+    # Security check: prevent scanning outside current working directory
+    if not str(root_path).startswith(str(cwd)):
+        raise HTTPException(400, "Root path must be within current working directory")
+    # Prevent path traversal attacks
+    if '..' in root_path.parts:
+        raise HTTPException(400, "Path traversal not allowed")
+
+    # Validate profile against allowed set
+    if profile not in SCAN_PROFILES:
+        raise HTTPException(400, f"Invalid profile. Must be one of {SCAN_PROFILES}")
+
+    # Validate custom_depth only when profile is custom
+    if profile == 'custom':
+        if custom_depth is None or not isinstance(custom_depth, int) or custom_depth <= 0:
+            raise HTTPException(400, "custom_depth must be a positive integer when profile is custom")
+
+def validate_search_params(title, author, type_, id_):
+    """
+    Validate search parameters for length and character safety.
+
+    Prevents abuse through overly long parameters and ensures only safe characters
+    are used to avoid SQL injection or other issues.
+
+    Args:
+        title: Search title parameter
+        author: Search author parameter
+        type_: Search type parameter
+        id_: Search ID parameter
+
+    Raises:
+        HTTPException: For invalid parameter lengths or characters
+    """
+    for param, value in [('title', title), ('author', author), ('type', type_), ('id', id_)]:
+        if value:
+            value = value.strip()
+            if len(value) > MAX_SEARCH_PARAM_LENGTH:
+                raise HTTPException(400, f"{param} must be {MAX_SEARCH_PARAM_LENGTH} characters or less")
+            if not SEARCH_PARAM_PATTERN.match(value):
+                raise HTTPException(400, f"{param} contains invalid characters")
+
+def validate_detail_id(id_):
+    """
+    Validate resource ID parameter for detail view.
+
+    Args:
+        id_: Resource ID to validate
+
+    Raises:
+        HTTPException: If ID is empty or whitespace-only
+    """
+    if not id_ or not id_.strip():
+        raise HTTPException(400, "id must be provided")
+
+def validate_pagination_params(page: int, limit: int):
+    """
+    Validate pagination parameters to prevent invalid or abusive requests.
+
+    Args:
+        page: Page number (must be >= 1)
+        limit: Items per page (must be between 1 and MAX_LIMIT)
+
+    Raises:
+        HTTPException: For invalid page or limit values
+    """
+    if page < 1:
+        raise HTTPException(400, "page must be >= 1")
+    if limit < 1 or limit > MAX_LIMIT:
+        raise HTTPException(400, f"limit must be between 1 and {MAX_LIMIT}")
+
+def render_pagination(current_page: int, limit: int, total_count: int, base_url: str, extra_params: str = ""):
+    """
+    Render HTMX-powered pagination controls for resource listings.
+
+    Uses HTMX to dynamically load pages without full page refreshes.
+    Only shows pagination if there are multiple pages.
+
+    Args:
+        current_page: Current page number
+        limit: Items per page
+        total_count: Total number of items
+        base_url: Base URL for pagination links
+        extra_params: Additional query parameters to preserve (e.g., search filters)
+
+    Returns:
+        HTML Div with pagination controls, or empty string if single page
+    """
+    total_pages = (total_count + limit - 1) // limit
+    if total_pages <= 1:
+        return ""
+
+    prev_page = current_page - 1 if current_page > 1 else None
+    next_page = current_page + 1 if current_page < total_pages else None
+
+    pagination = Div(cls="pagination")
+    if prev_page:
+        # HTMX GET request updates only the #results div
+        pagination.append(Button("Previous", hx_get=f"{base_url}?page={prev_page}&limit={limit}{extra_params}", hx_target="#results", hx_swap="innerHTML"))
+    pagination.append(Span(f"Page {current_page} of {total_pages}"))
+    if next_page:
+        pagination.append(Button("Next", hx_get=f"{base_url}?page={next_page}&limit={limit}{extra_params}", hx_target="#results", hx_swap="innerHTML"))
+    return pagination
+
+def build_resource_table(resources, total_count=None, page=DEFAULT_PAGE, limit=DEFAULT_LIMIT, base_url="/", extra_params="", no_resources_msg="No resources found."):
+    """
+    Build HTML table for displaying resources with optional pagination.
+
+    Creates clickable titles that load details via HTMX, and includes pagination
+    controls when there are multiple pages.
+
+    Args:
+        resources: List of ResourceMetadata objects to display
+        total_count: Total count for pagination (None disables pagination)
+        page: Current page number
+        limit: Items per page
+        base_url: Base URL for pagination links
+        extra_params: Query parameters to preserve in pagination links
+        no_resources_msg: Message to show when no resources found
+
+    Returns:
+        HTML table or message paragraph
+    """
+    if not resources:
+        return P(no_resources_msg)
+
+    # Build table rows with HTMX-powered detail links
+    table_rows = [
+        Tr(
+            Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
+            Td(resource.metadata_type),
+            Td(resource.id),
+            Td(resource.link)
+        ) for resource in resources
+    ]
+
+    table = Table(
+        Thead(Tr(Th("Title"), Th("Type"), Th("ID"), Th("Path"))),
+        Tbody(*table_rows)
+    )
+
+    # Add pagination only if we have total count and multiple pages
+    if total_count is not None and total_count > limit:
+        pagination = render_pagination(page, limit, total_count, base_url, extra_params)
+        return Div(table, pagination)
+    else:
+        return table
 
 @app.exception_handler(404)
 def not_found(request, exc):
+    """
+    Handle 404 Not Found errors with a user-friendly page.
+
+    Args:
+        request: The incoming request that caused the 404
+        exc: The HTTPException instance
+
+    Returns:
+        HTMLResponse with 404 page content
+    """
     content = to_xml(Titled("404 - Page Not Found", Container(H1("404"), P("The page you requested was not found."))))
     return HTMLResponse(content)
 
+@app.exception_handler(Exception)
+def internal_error(request, exc):
+    """
+    Handle unexpected server errors with logging and user-friendly response.
+
+    Logs the full exception details for debugging while showing a generic
+    error message to users.
+
+    Args:
+        request: The incoming request that caused the error
+        exc: The exception that occurred
+
+    Returns:
+        HTMLResponse with 500 error page
+    """
+    logging.error(f"Internal server error: {exc}", exc_info=True)
+    content = to_xml(Titled("500 - Internal Server Error", Container(H1("500"), P("An internal server error occurred. Please try again later."))))
+    return HTMLResponse(content, status_code=500)
+
 @rt("/")
-def index():
-    import logging
+def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
+    """
+    Main index page displaying paginated list of all resources.
+
+    Renders the complete UI with search form, scan form, and resource table.
+    Uses caching to improve performance for repeated requests.
+
+    HTMX Behavior:
+    - Full page load on initial request
+    - Pagination handled by HTMX for dynamic updates
+
+    Args:
+        page: Page number for pagination (default: 1)
+        limit: Number of items per page (default: 50, max: 1000)
+
+    Returns:
+        Complete HTML page with forms and resource listing
+    """
+    validate_pagination_params(page, limit)
     logging.info("Rendering index: search_form defined first, then scan_form. Container order: scan_form, search_form")
-    db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
-    cache = Cache(Path(db_path))
-    resources = cache.get_all_resources()
+    db_path = os.getenv("ZINFO_DB_PATH", DEFAULT_DB_PATH)
+    try:
+        cache = Cache(Path(db_path))
+        offset = (page - 1) * limit
+        # Cache key includes pagination params for efficient lookups
+        key = (page, limit)
+        cached_result = index_cache.get(key)
+        if cached_result:
+            resources, total_count = cached_result
+        else:
+            # Fetch resources with pagination from database
+            resources, total_count = cache.get_all_resources(limit=limit, offset=offset)
+            # Cache the result to speed up subsequent identical requests
+            index_cache.set(key, (resources, total_count))
+    except Exception as e:
+        logging.error(f"Error loading resources in index: {e}", exc_info=True)
+        resources = []
+        total_count = 0
 
     # Search form with labels
     search_form = Form(
@@ -62,7 +389,7 @@ def index():
                 Option("Custom", value="custom"),
                 id="profile", name="profile", onchange="updateProfile()", cls="compact-select"
             )),
-            Input(id="custom_depth", name="custom_depth", type="number", min="1", max="10", placeholder="Depth", style="display:none;", aria_describedby="depth-help", cls="compact-input"),
+            Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", style="display:none;", aria_describedby="depth-help", cls="compact-input"),
             Button("Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML", cls="compact-btn"),
             cls="scan-form-row"
         ),
@@ -77,230 +404,12 @@ def index():
         cls="compact-scan-form"
     )
 
-    if not resources:
-        results_div = Div(P("No cached resources found."), id="results")
-    else:
-        table_rows = [
-            Tr(
-                Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
-                Td(resource.metadata_type),
-                Td(resource.id),
-                Td(resource.link)
-            ) for resource in resources
-        ]
-
-        table = Table(
-            Thead(Tr(Th("Title"), Th("Type"), Th("ID"), Th("Path"))),
-            Tbody(*table_rows)
-        )
-        results_div = Div(table, id="results")
+    table_content = build_resource_table(resources, total_count, page, limit, "/", "", "No cached resources found.")
+    results_div = Div(table_content, id="results")
 
     return Titled("zInfo",
         P("Scan directories for project metadata files and browse indexed resources"),
-        Style("""
-            .main-grid {
-                display: grid;
-                grid-template-areas:
-                    "header"
-                    "main";
-                gap: 1rem;
-                min-height: 100vh;
-            }
-            .header-area {
-                grid-area: header;
-                display: grid;
-                grid-template-columns: 1fr auto;
-                align-items: start;
-                gap: 1rem;
-                padding: 1rem;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-            .search-centered {
-                justify-self: center;
-                max-width: 600px;
-            }
-            .scan-right {
-                justify-self: end;
-            }
-            .main-content {
-                grid-area: main;
-                padding: 1rem;
-            }
-            .search-form {
-                background: white;
-                padding: 1.5rem;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                border: 1px solid #e1e5e9;
-            }
-            .search-form fieldset {
-                border: none;
-                padding: 0;
-                margin: 0;
-            }
-            .search-form .form-group {
-                margin-bottom: 1rem;
-            }
-            .search-form label {
-                display: block;
-                font-weight: 600;
-                color: #374151;
-                margin-bottom: 0.5rem;
-            }
-            .search-form input {
-                width: 100%;
-                padding: 0.5rem;
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                font-size: 1rem;
-            }
-            .search-form button {
-                background: #3b82f6;
-                color: white;
-                padding: 0.75rem 1.5rem;
-                border: none;
-                border-radius: 4px;
-                font-size: 1rem;
-                cursor: pointer;
-                transition: background-color 0.2s;
-            }
-            .search-form button:hover {
-                background: #2563eb;
-            }
-            .compact-scan-form {
-                background: white;
-                padding: 1rem;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                border: 1px solid #e1e5e9;
-            }
-            .scan-form-row {
-                display: flex;
-                gap: 0.5rem;
-                align-items: end;
-                flex-wrap: wrap;
-            }
-            .compact-input, .compact-select {
-                padding: 0.5rem;
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                font-size: 0.9rem;
-            }
-            .compact-input {
-                flex: 1;
-                min-width: 120px;
-            }
-            .compact-select {
-                min-width: 100px;
-            }
-            .compact-btn {
-                background: #10b981;
-                color: white;
-                padding: 0.5rem 1rem;
-                border: none;
-                border-radius: 4px;
-                font-size: 0.9rem;
-                cursor: pointer;
-                transition: background-color 0.2s;
-            }
-            .compact-btn:hover:not(:disabled) {
-                background: #059669;
-            }
-            .compact-btn:disabled {
-                background: #9ca3af;
-                cursor: not-allowed;
-            }
-            .status-text {
-                margin-top: 0.5rem;
-                font-size: 0.9rem;
-                color: #6b7280;
-            }
-            .results-card {
-                background: white;
-                padding: 1.5rem;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                border: 1px solid #e1e5e9;
-                margin-bottom: 1rem;
-            }
-            .results-card table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            .results-card th, .results-card td {
-                padding: 0.75rem;
-                text-align: left;
-                border-bottom: 1px solid #e5e7eb;
-            }
-            .results-card th {
-                background: #f9fafb;
-                font-weight: 600;
-                color: #374151;
-            }
-            .results-card a {
-                color: #3b82f6;
-                text-decoration: none;
-            }
-            .results-card a:hover {
-                text-decoration: underline;
-            }
-            .detail-card {
-                background: white;
-                padding: 1.5rem;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                border: 1px solid #e1e5e9;
-                margin-top: 1rem;
-            }
-            .error-messages {
-                color: #dc2626;
-                background: #fef2f2;
-                padding: 0.5rem;
-                border-radius: 4px;
-                border: 1px solid #fecaca;
-            }
-            .success-messages {
-                color: #16a34a;
-                background: #f0fdf4;
-                padding: 0.5rem;
-                border-radius: 4px;
-                border: 1px solid #bbf7d0;
-            }
-            @media (max-width: 768px) {
-                .main-grid {
-                    grid-template-areas:
-                        "header"
-                        "main";
-                }
-                .header-area {
-                    grid-template-columns: 1fr;
-                    gap: 1rem;
-                }
-                .search-centered {
-                    justify-self: stretch;
-                }
-                .scan-right {
-                    justify-self: stretch;
-                }
-                .scan-form-row {
-                    flex-direction: column;
-                    align-items: stretch;
-                }
-                .compact-input, .compact-select {
-                    width: 100%;
-                }
-            }
-            @media (min-width: 769px) and (max-width: 1024px) {
-                .header-area {
-                    gap: 0.5rem;
-                }
-                .search-centered {
-                    max-width: 500px;
-                }
-            }
-        """),
+        Link(rel="stylesheet", href="/static/style.css"),
         Div(
             Div(
                 Div(search_form, cls="search-centered"),
@@ -314,89 +423,71 @@ def index():
             ),
             cls="main-grid"
         ),
-        Script("""
-            function updateProfile() {
-                const profile = document.getElementById('profile').value;
-                const customInput = document.getElementById('custom_depth');
-                if (profile === 'custom') {
-                    customInput.style.display = 'block';
-                    customInput.required = true;
-                } else {
-                    customInput.style.display = 'none';
-                    customInput.required = false;
-                }
-                validateScanForm();
-            }
-
-            function validateScanForm() {
-                const root = document.getElementById('root').value.trim();
-                const profile = document.getElementById('profile').value;
-                const customDepth = document.getElementById('custom_depth');
-                const btn = document.getElementById('scan-btn');
-                const errors = document.getElementById('scan-errors');
-
-                let isValid = root !== '';
-                if (profile === 'custom') {
-                    isValid = isValid && customDepth.value && parseInt(customDepth.value) >= 1;
-                }
-
-                btn.disabled = !isValid;
-
-                if (!isValid) {
-                    errors.textContent = 'Please fill in all required fields.';
-                    errors.style.display = 'block';
-                } else {
-                    errors.style.display = 'none';
-                }
-
-                return isValid;
-            }
-
-            document.getElementById('root').addEventListener('input', validateScanForm);
-            document.getElementById('custom_depth').addEventListener('input', validateScanForm);
-
-            // Initial validation
-            validateScanForm();
-        """)
+        Script(src="/static/script.js")
     )
 
 @rt("/search")
-def search(request, title: str = "", author: str = "", type: str = "", id: str = ""):
-    db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
-    cache = Cache(Path(db_path))
+def search(request, title: str = "", author: str = "", type: str = "", id: str = "", page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
+    """
+    Search resources by title, author, type, and/or ID with pagination.
 
-    # Filter out empty strings
-    search_params = {}
-    if title.strip():
-        search_params['title'] = title.strip()
-    if author.strip():
-        search_params['author'] = author.strip()
-    if type.strip():
-        search_params['metadata_type'] = type.strip()
-    if id.strip():
-        search_params['id'] = id.strip()
+    Filters resources based on provided search criteria. Uses caching to improve
+    performance for repeated searches with same parameters.
 
-    resources = cache.search_resources(**search_params)
+    HTMX Behavior:
+    - Returns only table content for dynamic updates when requested via HTMX
+    - Returns full page for direct browser navigation
 
-    if not resources:
-        content = P("No matching resources found.")
+    Args:
+        request: FastHTML request object (used to detect HTMX requests)
+        title: Search term for resource titles
+        author: Search term for resource authors
+        type: Search term for resource types
+        id: Search term for resource IDs
+        page: Page number for pagination
+        limit: Number of results per page
+
+    Returns:
+        HTML content - table fragment for HTMX, full page otherwise
+    """
+    validate_search_params(title, author, type, id)
+    validate_pagination_params(page, limit)
+    db_path = os.getenv("ZINFO_DB_PATH", DEFAULT_DB_PATH)
+    try:
+        cache = Cache(Path(db_path))
+
+        # Build search parameters dict, filtering out empty values
+        search_params = {}
+        if title.strip():
+            search_params['title'] = title.strip()
+        if author.strip():
+            search_params['author'] = author.strip()
+        if type.strip():
+            search_params['metadata_type'] = type.strip()
+        if id.strip():
+            search_params['id'] = id.strip()
+
+        offset = (page - 1) * limit
+        # Create cache key from sorted params to ensure consistent hashing
+        search_key = tuple(sorted(search_params.items()))
+        key = (search_key, page, limit)
+        cached_result = search_cache.get(key)
+        if cached_result:
+            resources, total_count = cached_result
+        else:
+            # Perform database search with filters and pagination
+            resources, total_count = cache.search_resources(limit=limit, offset=offset, **search_params)
+            # Cache results for faster subsequent identical searches
+            search_cache.set(key, (resources, total_count))
+    except Exception as e:
+        logging.error(f"Error searching resources: {e}", exc_info=True)
+        content = P("An error occurred while searching. Please try again.")
     else:
-        table_rows = [
-            Tr(
-                Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
-                Td(resource.metadata_type),
-                Td(resource.id),
-                Td(resource.link)
-            ) for resource in resources
-        ]
+        # Preserve search parameters in pagination links
+        extra_params = f"&title={title}&author={author}&type={type}&id={id}"
+        content = build_resource_table(resources, total_count, page, limit, "/search", extra_params, "No matching resources found.")
 
-        table = Table(
-            Thead(Tr(Th("Title"), Th("Type"), Th("ID"), Th("Path"))),
-            Tbody(*table_rows)
-        )
-        content = table
-
-    # Check if this is an HTMX request
+    # HTMX requests get only the content fragment, direct requests get full page
     if request.headers.get("HX-Request"):
         return content
     else:
@@ -404,23 +495,47 @@ def search(request, title: str = "", author: str = "", type: str = "", id: str =
 
 @rt("/detail")
 def detail(request, id: str):
-    db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
-    cache = Cache(Path(db_path))
-    resource = cache.get_resource(id)
+    """
+    Display detailed information for a specific resource.
 
-    if not resource:
-        content = P("Resource not found.")
+    Retrieves and displays full metadata for a resource by ID.
+    Used by HTMX links in resource tables.
+
+    HTMX Behavior:
+    - Returns detail panel fragment for dynamic updates
+    - Returns full page for direct navigation
+
+    Args:
+        request: FastHTML request object (used to detect HTMX requests)
+        id: Resource ID to retrieve details for
+
+    Returns:
+        HTML content - detail panel for HTMX, full page otherwise
+    """
+    validate_detail_id(id)
+    db_path = os.getenv("ZINFO_DB_PATH", DEFAULT_DB_PATH)
+    try:
+        cache = Cache(Path(db_path))
+        resource = cache.get_resource(id)
+    except Exception as e:
+        logging.error(f"Error retrieving resource {id}: {e}", exc_info=True)
+        content = P("An error occurred while retrieving the resource.")
     else:
-        panel = Div(
-            H3(resource.title),
-            P(f"Type: {resource.metadata_type}"),
-            P(f"Link: {resource.link}"),
-            P(f"Contact: {resource.contact}"),
-            P(f"Doc Dir: {resource.doc_dir}"),
-            id="detail-panel"
-        )
-        content = panel
+        if not resource:
+            content = P("Resource not found.")
+        else:
+            # Display comprehensive resource metadata
+            panel = Div(
+                H3(resource.title),
+                P(f"Type: {resource.metadata_type}"),
+                P(f"Link: {resource.link}"),
+                P(f"Contact: {resource.contact}"),
+                P(f"Doc Dir: {resource.doc_dir}"),
+                id="detail-panel"
+            )
+            content = panel
 
+    # HTMX requests update the #detail div, direct requests show full page
     if request.headers.get("HX-Request"):
         return content
     else:
@@ -428,41 +543,54 @@ def detail(request, id: str):
 
 @rt("/scan", methods=["POST"])
 def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int] = None):
-    db_path = os.getenv("ZINFO_DB_PATH", "zinfo.db")
-    cache = Cache(Path(db_path))
+    """
+    Perform directory scan for project metadata files.
 
-    # Determine depth based on profile
-    if profile == "custom":
-        depth = custom_depth if custom_depth is not None else 5
-    else:
-        depth_map = {"quick": 1, "standard": 3, "deep": 5}
-        depth = depth_map.get(profile, 5)
+    Scans the specified directory tree for zinfo.txt files, extracts metadata,
+    and updates the database. Invalidates caches to ensure fresh data display.
 
-    scanner = ZinfoScanner(Path(root), cache, max_depth=depth)
-    result = scanner.scan()
+    HTMX Behavior:
+    - Updates multiple page elements: status, results table, and shows toast
+    - Uses hx_swap_oob for out-of-band updates to multiple targets
 
-    # Return updated table content
-    resources = cache.get_all_resources()
+    Args:
+        root: Root directory to scan (must be within current working directory)
+        profile: Scan profile determining depth ('quick', 'standard', 'deep', 'custom')
+        custom_depth: Custom scan depth when profile is 'custom'
 
-    if not resources:
-        content = P("No cached resources found.")
-    else:
-        table_rows = [
-            Tr(
-                Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
-                Td(resource.metadata_type),
-                Td(resource.id),
-                Td(resource.link)
-            ) for resource in resources
-        ]
+    Returns:
+        Tuple of (status_div, results_div, toast) for HTMX multi-target updates
+    """
+    validate_scan_params(root, profile, custom_depth)
+    db_path = os.getenv("ZINFO_DB_PATH", DEFAULT_DB_PATH)
+    try:
+        cache = Cache(Path(db_path))
 
-        table = Table(
-            Thead(Tr(Th("Title"), Th("Type"), Th("ID"), Th("Path"))),
-            Tbody(*table_rows)
-        )
-        content = table
+        # Map profile to actual depth value
+        if profile == "custom":
+            depth = custom_depth if custom_depth is not None else DEFAULT_DEPTH
+        else:
+            depth = PROFILE_DEPTHS.get(profile, DEFAULT_DEPTH)
 
-    # Add toast based on scan result
+        # Perform the scan operation
+        scanner = ZinfoScanner(Path(root), cache, max_depth=depth)
+        result = scanner.scan()
+
+        # Clear caches since data has changed - ensures users see updated results immediately
+        index_cache.clear()
+        search_cache.clear()
+
+        # Fetch updated resource list for display
+        resources, _ = cache.get_all_resources()
+    except Exception as e:
+        logging.error(f"Error during scan: {e}", exc_info=True)
+        status_div = Div("Scan failed due to an error.", id="scan-status")
+        return status_div, Toast("Scan failed", typ="error")
+
+    # Build updated results table
+    content = build_resource_table(resources, no_resources_msg="No cached resources found.")
+
+    # Generate appropriate messages based on scan outcome
     if result.errors:
         toast_msg = f"Scan completed with {len(result.errors)} errors"
         toast_type = "error"
@@ -472,15 +600,27 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
         toast_type = "success"
         status_msg = toast_msg
 
+    # Prepare HTMX response elements
     status_div = Div(status_msg, id="scan-status")
+    # hx_swap_oob allows updating #results div even though it's not the main target
     results_div = Div(content, id="results", hx_swap_oob="innerHTML")
 
     return status_div, results_div, Toast(toast_msg, typ=toast_type)
 
 @click.command()
-@click.option('--host', default='0.0.0.0', help='Host to bind the server to.')
-@click.option('--port', default=5001, type=int, help='Port to bind the server to.')
-@click.option('--reload/--no-reload', default=True, is_flag=True, help='Enable live reload')
+@click.option('--host', default=DEFAULT_HOST, help='Host to bind the server to.')
+@click.option('--port', default=DEFAULT_PORT, type=int, help='Port to bind the server to.')
+@click.option('--reload/--no-reload', default=True, is_flag=True, help='Enable live reload during development.')
 def run(host, port, reload):
-    """Start the zInfo FastHTML web UI server."""
+    """
+    Start the zInfo FastHTML web UI server.
+
+    Launches the web interface for browsing and searching indexed project metadata.
+    The server provides HTMX-powered dynamic updates for search, pagination, and scanning.
+
+    Args:
+        host: Host address to bind the server to (default: 0.0.0.0)
+        port: Port number to bind the server to (default: 5001)
+        reload: Enable auto-reload on code changes for development (default: True)
+    """
     uvicorn.run('zinfo.ui.fh_ui:app', host=host, port=port, reload=reload)
