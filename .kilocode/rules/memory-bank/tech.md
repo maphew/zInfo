@@ -4,7 +4,7 @@
 - **Language**: Python 3.11+
 - **CLI Framework**: Click for command-line interface
 - **GUI Framework**: NullUI for headless/CLI-only usage
-- **Web Framework**: FastHTML, reference manual: `/reference/llms-ctx.md`
+- **Web Framework**: FastHTML, reference manual: `/reference/llms-ctx.txt`
 - **Database**: SQLite for caching and persistence
 - **Data Structures**: dataclasses for models
 - **File Handling**: pathlib for cross-platform paths
