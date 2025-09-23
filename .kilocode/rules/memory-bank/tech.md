@@ -4,6 +4,7 @@
 - **Language**: Python 3.11+
 - **CLI Framework**: Click for command-line interface
 - **GUI Framework**: NullUI for headless/CLI-only usage
+- **Web Framework**: FastHTML using idiomatic patterns - `fast_app()` with exception handlers, `serve()` function for startup, automatic FT component response conversion, exclusive Pico CSS styling (no custom CSS), reference manual: `/reference/llms-ctx.txt`
 - **Database**: SQLite for caching and persistence
 - **Data Structures**: dataclasses for models
 - **File Handling**: pathlib for cross-platform paths
@@ -19,6 +20,12 @@
 - **Testing**: `uv run pytest` (pytest with coverage)
 - **Database**: SQLite file (default: zinfo.db) created on first scan
 
+## Tickets
+- **Reporting:** Create a new markdown file in `tickets/` with a clear title, short summary, steps to reproduce, expected vs actual behavior, environment details, and any relevant logs or attachments. Use a subagent when needed to gather reproducer data or screenshots.
+- **Triaging & Assigning:** Triage tickets promptly, add labels or priority.
+- **Fixing & Verification:** Link the ticket to a branch or change. When a fix is implemented, update the ticket with a short description of the change and verification steps performed.
+- **Commit & Push:** After local tests pass, stage changes with `git add -A`, commit with a descriptive message that references the ticket (e.g., "tickets/006: Fix FastHTML UI layout"), and push the branch (`git commit -m "..." && git push`).
+- **Closing:** Once the change is pushed and any CI/tests pass, mark the ticket closed and add final verification notes (what was tested and by whom).
 ## Technical Constraints
 - **Platform**: Primarily Windows-focused (UNC paths, file:/// links in legacy), but uses pathlib for cross-platform compatibility
 - **Metadata Formats**: Currently zinfo.txt (key-value); extensible via BaseScanner subclasses
@@ -29,6 +36,7 @@
 From pyproject.toml:
 - click (CLI)
 - pytest, pytest-cov (testing)
+- fasthtml (web-ui)
 
 Runtime: Standard library (datetime, json, os, logging, sqlite3)
 

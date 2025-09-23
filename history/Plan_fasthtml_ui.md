@@ -1,4 +1,11 @@
-Comprehensive plan to add a FastHTML UI to zInfo
+# Comprehensive plan to add a FastHTML UI to zInfo
+
+---------
+
+**Plan Completed** 2025-09-21  
+commit 016f71f4bed5a707c273a24536f48cc3ca6dab42
+
+---------
 
 Objective
 Deliver a minimal, server-rendered FastHTML UI that:

@@ -292,10 +292,11 @@ class Cache:
         metadata_type: Optional[str] = None,
         id: Optional[str] = None,
         limit: Optional[int] = None,
+        offset: Optional[int] = None,
         after_date: Optional[datetime] = None,
         before_date: Optional[datetime] = None,
         date_field: str = "created"  # Field to use for date filtering: created, updated, last_modified, last_indexed
-    ) -> List[ResourceMetadata]:
+    ) -> tuple[List[ResourceMetadata], int]:
         """Search resources with flexible filtering options."""
         conn = sqlite3.connect(
             self.db_path, timeout=self.timeout, detect_types=sqlite3.PARSE_DECLTYPES
@@ -349,8 +350,23 @@ class Cache:
                 query_parts.append("LIMIT ?")
                 params.append(limit)
 
+            if offset:
+                query_parts.append("OFFSET ?")
+                params.append(offset)
+
             query = " ".join(query_parts)
             logger.debug(f"Executing search query: {query} with params: {params}")
+
+            # Build count query (without ORDER BY, LIMIT, OFFSET)
+            order_by_index = query_parts.index("ORDER BY last_indexed DESC")
+            count_query = " ".join(query_parts[:order_by_index]).replace("SELECT * ", "SELECT COUNT(*) ", 1)
+            params_count = params
+            if offset:
+                params_count = params[:-1]  # remove offset
+            if limit:
+                params_count = params_count[:-1]  # remove limit
+
+            total_count = conn.execute(count_query, params_count).fetchone()[0]
 
             resources = []
             for row in conn.execute(query, params):
@@ -368,21 +384,35 @@ class Cache:
 
                 resources.append(resource)
 
-            return resources
+            return resources, total_count
         finally:
             conn.close()
 
-    def get_all_resources(self) -> List[ResourceMetadata]:
-        """Get all resources in the cache."""
+    def get_all_resources(self, limit: Optional[int] = None, offset: Optional[int] = None) -> tuple[List[ResourceMetadata], int]:
+        """Get all resources in the cache with optional pagination."""
         conn = sqlite3.connect(
             self.db_path, timeout=self.timeout, detect_types=sqlite3.PARSE_DECLTYPES
         )
         try:
             conn.row_factory = sqlite3.Row
+
+            # Get total count
+            total_count = conn.execute("SELECT COUNT(*) FROM resources").fetchone()[0]
+
+            # Build query with pagination
+            query = "SELECT * FROM resources ORDER BY last_indexed DESC"
+            params = []
+            if limit:
+                query += " LIMIT ?"
+                params.append(limit)
+            if offset:
+                query += " OFFSET ?"
+                params.append(offset)
+
             resources = []
-            for row in conn.execute("SELECT * FROM resources ORDER BY last_indexed DESC"):
+            for row in conn.execute(query, params):
                 resources.append(self._row_to_resource(row))
-            return resources
+            return resources, total_count
         finally:
             conn.close()
 

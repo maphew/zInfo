@@ -131,12 +131,12 @@ def test_search_resources_by_title(cache, sample_resource):
     cache.store_resource(sample_resource)
 
     # Search by title
-    results = cache.search_resources(title="Test")
+    results, _ = cache.search_resources(title="Test")
     assert len(results) == 1
     assert results[0].id == sample_resource.id
 
     # Search with no matches
-    results = cache.search_resources(title="Nonexistent")
+    results, _ = cache.search_resources(title="Nonexistent")
     assert len(results) == 0
 
 
@@ -153,12 +153,12 @@ def test_search_resources_by_author(cache, sample_resource):
     cache.store_resource(resource_with_author)
 
     # Search by author
-    results = cache.search_resources(author="John")
+    results, _ = cache.search_resources(author="John")
     assert len(results) == 1
     assert results[0].id == "test/resource2"
 
     # Search by contact
-    results = cache.search_resources(author="test@example.com")
+    results, _ = cache.search_resources(author="test@example.com")
     assert len(results) >= 1  # Should find the resource with this contact
 
 
@@ -166,7 +166,7 @@ def test_get_all_resources(cache, sample_resource):
     """Test getting all resources."""
     cache.store_resource(sample_resource)
 
-    resources = cache.get_all_resources()
+    resources, _ = cache.get_all_resources()
     assert len(resources) == 1
     assert resources[0].id == sample_resource.id
 
@@ -253,18 +253,18 @@ def test_search_resources_with_date_filtering(cache):
 
     # Test filtering by metadata date (created)
     after_date = datetime(2024, 3, 1)
-    results = cache.search_resources(after_date=after_date, date_field="created")
+    results, _ = cache.search_resources(after_date=after_date, date_field="created")
     assert len(results) == 1
     assert results[0].id == "test/resource2"
 
     # Test filtering by database date (last_modified)
-    results = cache.search_resources(after_date=after_date, date_field="last_modified")
+    results, _ = cache.search_resources(after_date=after_date, date_field="last_modified")
     assert len(results) == 1
     assert results[0].id == "test/resource2"
 
     # Test date range filtering
     before_date = datetime(2024, 3, 1)
-    results = cache.search_resources(
+    results, _ = cache.search_resources(
         after_date=datetime(2024, 1, 1),
         before_date=before_date,
         date_field="created"
