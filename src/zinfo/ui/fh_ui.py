@@ -51,50 +51,31 @@ def index():
         hx_swap="innerHTML",
         cls="search-form"
     )
-    # Scan form with redesigned inputs
+    # Compact scan form with horizontal layout
     scan_form = Form(
-        Fieldset(
-            Legend("Scan Configuration"),
-            Div(
-                Label("Target Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
-                Small("Enter the root directory to scan. Examples: . (current), /home/projects, C:\\Projects", id="root-help"),
-                cls="form-group"
-            ),
-            Div(
-                Label("Scan Profile", Select(
-                    Option("Quick", value="quick"),
-                    Option("Standard", value="standard"),
-                    Option("Deep", value="deep"),
-                    Option("Custom", value="custom"),
-                    id="profile", name="profile", onchange="updateProfile()"
-                )),
-                Small("Quick: 1 level deep, Standard: 3 levels, Deep: 5 levels, Custom: specify depth", id="profile-help"),
-                cls="form-group"
-            ),
-            Div(
-                Label("Custom Depth", Input(id="custom_depth", name="custom_depth", type="number", min="1", max="10", style="display:none;", aria_describedby="depth-help"),
-                Small("Specify scan depth (1-10 levels)", id="depth-help"),
-                cls="form-group", id="custom-depth-group",
-                style="display:none;"
-            ),
-        ),
-        Button("Start Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
-        Div(id="scan-status"),
-        Small("Button enabled when target directory and scan profile have been set", id="scan-help"),
         Div(
-            Div(
-                id="scan-errors", cls="error-messages", style="display:none;"
-            ),
-            Div(
-                id="scan-success", cls="success-messages", style="display:none;"
-            ),
-            id="scan-results",
-            cls="scan-results"
+            Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help", cls="compact-input")),
+            Label("Profile", Select(
+                Option("Quick", value="quick"),
+                Option("Standard", value="standard"),
+                Option("Deep", value="deep"),
+                Option("Custom", value="custom"),
+                id="profile", name="profile", onchange="updateProfile()", cls="compact-select"
+            )),
+            Input(id="custom_depth", name="custom_depth", type="number", min="1", max="10", placeholder="Depth", style="display:none;", aria_describedby="depth-help", cls="compact-input"),
+            Button("Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML", cls="compact-btn"),
+            cls="scan-form-row"
         ),
-        cls="form-group",
+        Div(id="scan-status", cls="status-text"),
+        Div(
+            Div(id="scan-errors", cls="error-messages", style="display:none;"),
+            Div(id="scan-success", cls="success-messages", style="display:none;"),
+            id="scan-results", cls="scan-results"
+        ),
         id="scan-form",
-        onsubmit="return validateScanForm()"
-    ))
+        onsubmit="return validateScanForm()",
+        cls="compact-scan-form"
+    )
 
     if not resources:
         results_div = Div(P("No cached resources found."), id="results")
@@ -116,59 +97,267 @@ def index():
 
     return Titled("zInfo",
         P("Scan directories for project metadata files and browse indexed resources"),
-        Container(
-            search_form,
-            scan_form,
-            results_div,
-            Div(id="detail"),
-            Script("""
-                function updateProfile() {
-                    const profile = document.getElementById('profile').value;
-                    const customGroup = document.getElementById('custom-depth-group');
-                    const customInput = document.getElementById('custom_depth');
-                    if (profile === 'custom') {
-                        customGroup.style.display = 'block';
-                        customInput.style.display = 'block';
-                        customInput.required = true;
-                    } else {
-                        customGroup.style.display = 'none';
-                        customInput.style.display = 'none';
-                        customInput.required = false;
-                    }
-                    validateScanForm();
+        Style("""
+            .main-grid {
+                display: grid;
+                grid-template-areas:
+                    "header"
+                    "main";
+                gap: 1rem;
+                min-height: 100vh;
+            }
+            .header-area {
+                grid-area: header;
+                display: grid;
+                grid-template-columns: 1fr auto;
+                align-items: start;
+                gap: 1rem;
+                padding: 1rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .search-centered {
+                justify-self: center;
+                max-width: 600px;
+            }
+            .scan-right {
+                justify-self: end;
+            }
+            .main-content {
+                grid-area: main;
+                padding: 1rem;
+            }
+            .search-form {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                border: 1px solid #e1e5e9;
+            }
+            .search-form fieldset {
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+            .search-form .form-group {
+                margin-bottom: 1rem;
+            }
+            .search-form label {
+                display: block;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 0.5rem;
+            }
+            .search-form input {
+                width: 100%;
+                padding: 0.5rem;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 1rem;
+            }
+            .search-form button {
+                background: #3b82f6;
+                color: white;
+                padding: 0.75rem 1.5rem;
+                border: none;
+                border-radius: 4px;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+            .search-form button:hover {
+                background: #2563eb;
+            }
+            .compact-scan-form {
+                background: white;
+                padding: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                border: 1px solid #e1e5e9;
+            }
+            .scan-form-row {
+                display: flex;
+                gap: 0.5rem;
+                align-items: end;
+                flex-wrap: wrap;
+            }
+            .compact-input, .compact-select {
+                padding: 0.5rem;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 0.9rem;
+            }
+            .compact-input {
+                flex: 1;
+                min-width: 120px;
+            }
+            .compact-select {
+                min-width: 100px;
+            }
+            .compact-btn {
+                background: #10b981;
+                color: white;
+                padding: 0.5rem 1rem;
+                border: none;
+                border-radius: 4px;
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+            .compact-btn:hover:not(:disabled) {
+                background: #059669;
+            }
+            .compact-btn:disabled {
+                background: #9ca3af;
+                cursor: not-allowed;
+            }
+            .status-text {
+                margin-top: 0.5rem;
+                font-size: 0.9rem;
+                color: #6b7280;
+            }
+            .results-card {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                border: 1px solid #e1e5e9;
+                margin-bottom: 1rem;
+            }
+            .results-card table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .results-card th, .results-card td {
+                padding: 0.75rem;
+                text-align: left;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .results-card th {
+                background: #f9fafb;
+                font-weight: 600;
+                color: #374151;
+            }
+            .results-card a {
+                color: #3b82f6;
+                text-decoration: none;
+            }
+            .results-card a:hover {
+                text-decoration: underline;
+            }
+            .detail-card {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                border: 1px solid #e1e5e9;
+                margin-top: 1rem;
+            }
+            .error-messages {
+                color: #dc2626;
+                background: #fef2f2;
+                padding: 0.5rem;
+                border-radius: 4px;
+                border: 1px solid #fecaca;
+            }
+            .success-messages {
+                color: #16a34a;
+                background: #f0fdf4;
+                padding: 0.5rem;
+                border-radius: 4px;
+                border: 1px solid #bbf7d0;
+            }
+            @media (max-width: 768px) {
+                .main-grid {
+                    grid-template-areas:
+                        "header"
+                        "main";
                 }
-
-                function validateScanForm() {
-                    const root = document.getElementById('root').value.trim();
-                    const profile = document.getElementById('profile').value;
-                    const customDepth = document.getElementById('custom_depth');
-                    const btn = document.getElementById('scan-btn');
-                    const errors = document.getElementById('scan-errors');
-
-                    let isValid = root !== '';
-                    if (profile === 'custom') {
-                        isValid = isValid && customDepth.value && parseInt(customDepth.value) >= 1;
-                    }
-
-                    btn.disabled = !isValid;
-
-                    if (!isValid) {
-                        errors.textContent = 'Please fill in all required fields.';
-                        errors.style.display = 'block';
-                    } else {
-                        errors.style.display = 'none';
-                    }
-
-                    return isValid;
+                .header-area {
+                    grid-template-columns: 1fr;
+                    gap: 1rem;
                 }
-
-                document.getElementById('root').addEventListener('input', validateScanForm);
-                document.getElementById('custom_depth').addEventListener('input', validateScanForm);
-
-                // Initial validation
+                .search-centered {
+                    justify-self: stretch;
+                }
+                .scan-right {
+                    justify-self: stretch;
+                }
+                .scan-form-row {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .compact-input, .compact-select {
+                    width: 100%;
+                }
+            }
+            @media (min-width: 769px) and (max-width: 1024px) {
+                .header-area {
+                    gap: 0.5rem;
+                }
+                .search-centered {
+                    max-width: 500px;
+                }
+            }
+        """),
+        Div(
+            Div(
+                Div(search_form, cls="search-centered"),
+                Div(scan_form, cls="scan-right"),
+                cls="header-area"
+            ),
+            Div(
+                Div(results_div, cls="results-card"),
+                Div(id="detail", cls="detail-card"),
+                cls="main-content"
+            ),
+            cls="main-grid"
+        ),
+        Script("""
+            function updateProfile() {
+                const profile = document.getElementById('profile').value;
+                const customInput = document.getElementById('custom_depth');
+                if (profile === 'custom') {
+                    customInput.style.display = 'block';
+                    customInput.required = true;
+                } else {
+                    customInput.style.display = 'none';
+                    customInput.required = false;
+                }
                 validateScanForm();
-            """)
-        )
+            }
+
+            function validateScanForm() {
+                const root = document.getElementById('root').value.trim();
+                const profile = document.getElementById('profile').value;
+                const customDepth = document.getElementById('custom_depth');
+                const btn = document.getElementById('scan-btn');
+                const errors = document.getElementById('scan-errors');
+
+                let isValid = root !== '';
+                if (profile === 'custom') {
+                    isValid = isValid && customDepth.value && parseInt(customDepth.value) >= 1;
+                }
+
+                btn.disabled = !isValid;
+
+                if (!isValid) {
+                    errors.textContent = 'Please fill in all required fields.';
+                    errors.style.display = 'block';
+                } else {
+                    errors.style.display = 'none';
+                }
+
+                return isValid;
+            }
+
+            document.getElementById('root').addEventListener('input', validateScanForm);
+            document.getElementById('custom_depth').addEventListener('input', validateScanForm);
+
+            // Initial validation
+            validateScanForm();
+        """)
     )
 
 @rt("/search")
