@@ -21,9 +21,11 @@
 - **Database**: SQLite file (default: zinfo.db) created on first scan
 
 ## Tickets
-- When you discover an issue, immediately update `tickets/` with your findings using a subagent. When the issue is resolved, update `tickets/` and mark closed.
-- When the tests pass, update `tickets/`, then add changed code and ticket with "git add -A" via bash, then do a "git commit" with a message that describes the changes you made to the code. After the commit, do a "git push" to push the changes to the remote repository.
-
+- **Reporting:** Create a new markdown file in `tickets/` with a clear title, short summary, steps to reproduce, expected vs actual behavior, environment details, and any relevant logs or attachments. Use a subagent when needed to gather reproducer data or screenshots.
+- **Triaging & Assigning:** Triage tickets promptly, add labels or priority.
+- **Fixing & Verification:** Link the ticket to a branch or change. When a fix is implemented, update the ticket with a short description of the change and verification steps performed.
+- **Commit & Push:** After local tests pass, stage changes with `git add -A`, commit with a descriptive message that references the ticket (e.g., "tickets/006: Fix FastHTML UI layout"), and push the branch (`git commit -m "..." && git push`).
+- **Closing:** Once the change is pushed and any CI/tests pass, mark the ticket closed and add final verification notes (what was tested and by whom).
 ## Technical Constraints
 - **Platform**: Primarily Windows-focused (UNC paths, file:/// links in legacy), but uses pathlib for cross-platform compatibility
 - **Metadata Formats**: Currently zinfo.txt (key-value); extensible via BaseScanner subclasses
