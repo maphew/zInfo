@@ -107,7 +107,11 @@ index_cache = TTLCache(INDEX_CACHE_TTL)  # Cache for main index page results
 search_cache = TTLCache(SEARCH_CACHE_TTL)  # Cache for search results (shorter TTL due to dynamic queries)
 
 app, rt = fast_app(htmx=True, pico=True)
-app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
+
+# todo: remove this
+# app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
+
+
 setup_toasts(app)
 
 def validate_scan_params(root, profile, custom_depth):
@@ -277,12 +281,6 @@ def build_resource_table(resources, total_count=None, page=DEFAULT_PAGE, limit=D
     else:
         return table
 
-@rt("/liststatic")
-def liststatic():
-    import os
-    path = Path(__file__).parent / "static"
-    return str(list(path.iterdir()))
-
 @app.exception_handler(404)
 def not_found(request, exc):
     """
@@ -384,7 +382,7 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
                 id="profile", name="profile", onchange="updateProfile()"
             )),
             Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", aria_describedby="depth-help"),
-            Button("Scan", type="submit", id="scan-btn", disabled=True, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
+            Button("Scan", type="submit", id="scan-btn", disabled=False, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
         ),
         Div(id="scan-status"),
         Div(
@@ -405,7 +403,6 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         Grid(search_form, scan_form),
         Card(results_div),
         Card(Div(id="detail")),
-        Script(src="/static/script.js"),
     )
 
 @rt("/search")
