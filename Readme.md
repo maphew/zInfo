@@ -146,6 +146,7 @@ status: Complete
 
 **System**
 - `dir_id`: unique id computed at scan time from project folder, hashed into 6 or more characters. Not editable.
+- `dir_path`: fully resolved path to marker file dir
 
 **Required**
 - `title`: Project name (max 100 chars)
@@ -153,8 +154,11 @@ status: Complete
 - `summary`: Short description (max 200 chars)
 - `description`: Detailed description (max 1000 chars)
 - `team`: Primary author(s) or team lead(s). Semicolon-delimited list with name, email, fediverse/social handle.
+- `location`: path to where the project marker file lives
   
 **Optional**
+- `related_projects`: related project names or IDs
+- `links`: url or file links
 - `internal_ID`: Project ID used by the business unit or team internally
 - `date_begin`: project start date (ISO, all dates are ISO
 - `date_started`: when project work began
