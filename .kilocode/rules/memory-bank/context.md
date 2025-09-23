@@ -25,6 +25,8 @@
 - Refactored FastHTML UI to use constants for hardcoded values (scan profiles, depths, pagination defaults, cache TTLs, etc.).
 - **Created comprehensive security documentation** for FastHTML UI explaining authentication, access control, input validation, path traversal prevention, and deployment considerations.
 - **Closed ticket 006-fasthtml-ui.md** after confirming all UI tests pass (72/72). FastHTML UI implementation complete and ready for production.
+- **Refactored FastHTML UI to remove all custom styling**: Eliminated all custom CSS classes, inline styles, and non-default styling modifications. UI now relies exclusively on FastHTML's built-in Pico CSS framework for consistent, maintainable styling. Simplified form layouts using standard Fieldset/Legend components and replaced custom grid layouts with native Grid and Card components.
+- **Completed comprehensive FastHTML UI refactoring for best practices compliance**: Refactored [`src/zinfo/ui/fh_ui.py`](src/zinfo/ui/fh_ui.py) to follow idiomatic FastHTML patterns across 5 key areas: (1) moved exception handlers from decorator-based to `fast_app()` parameter approach, (2) replaced manual uvicorn startup with FastHTML's `serve()` function, (3) eliminated manual `to_xml()`/`HTMLResponse` creation in favor of returning FT components directly, (4) removed redundant Starlette imports already available in `fasthtml.common`, and (5) fixed redundant Container wrappers with Titled components. All 46 tests pass, functionality completely preserved, code now more maintainable and aligned with FastHTML best practices. Server startup function renamed to `run_server()` to avoid conflicts.
 
 ## Next Steps
 - Add project initiation tools to create boilerplate folders and metadata files.

@@ -5,7 +5,8 @@ zInfo follows a modular architecture centered around scanning, metadata extracti
 
 High-level components:
 - **CLI Layer**: Entry point using Click for commands like `scan` and `query`.
-- **GUI Layer**: Headless graphical interface using NullUI for CLI-only usage.
+- **GUI Layer**: Headless graphical interface using NullUI for CLI-only usage, plus FastHTML web UI for browser-based access.
+- **Web UI Layer**: FastHTML-based web interface following idiomatic patterns with Pico CSS styling, HTMX interactivity, and proper exception handling.
 - **Scanner Layer**: Core logic for directory traversal and metadata extraction using abstract base classes.
 - **Cache Layer**: SQLite-based persistence for scan results and metadata.
 - **Model Layer**: Dataclasses representing resources and scan outcomes.
@@ -16,6 +17,7 @@ Data flow: CLI -> Scanner (with Cache) -> Models -> Cache -> Query/Output.
 ## Source Code Paths
 - **CLI Entry Point**: [`src/zinfo/cli.py`](src/zinfo/cli.py) - Defines `main` group and `scan`/`query` commands.
 - **GUI Entry Point**: [`src/zinfo/ui/main.py`](src/zinfo/ui/main.py) - GUI application launcher and main entry point.
+- **FastHTML Web UI**: [`src/zinfo/ui/fh_ui.py`](src/zinfo/ui/fh_ui.py) - Complete web interface with browsing, searching, filtering, and scanning capabilities using idiomatic FastHTML patterns.
 - **Core Models**: [`src/zinfo/core/models.py`](src/zinfo/core/models.py) - `ResourceMetadata` and `ScanResult` dataclasses.
 - **Scanning**: [`src/zinfo/core/scanner.py`](src/zinfo/core/scanner.py) - `BaseScanner` (ABC) and `ZinfoScanner` implementation.
 - **Caching**: [`src/zinfo/core/cache.py`](src/zinfo/core/cache.py) - SQLite cache implementation with resource and scan tables.
@@ -28,6 +30,7 @@ Data flow: CLI -> Scanner (with Cache) -> Models -> Cache -> Query/Output.
 - **Extensibility**: Abstract BaseScanner allows subclassing for new formats (e.g., INI, YAML); ResourceMetadata type field for polymorphism.
 - **Error Handling**: Collect errors in ScanResult without halting scan; logging for diagnostics.
 - **Platform**: Pathlib for cross-platform paths, but Windows-focused examples (UNC, file:/// links in legacy).
+- **Web UI Architecture**: FastHTML with idiomatic patterns - exception handlers via `fast_app()` parameters, automatic response conversion from FT components, `serve()` function for startup, and exclusive use of Pico CSS framework without custom styling.
 
 ## Design Patterns
 - **Abstract Factory/Strategy**: BaseScanner ABC for pluggable metadata extractors.
@@ -40,9 +43,11 @@ Data flow: CLI -> Scanner (with Cache) -> Models -> Cache -> Query/Output.
 - Scanner traverses dirs, extracts via extract_metadata -> Models, stores via Cache.
 - Cache interacts with DB, serializes Models to rows (JSON for extra).
 - Models are immutable dataclasses, used across layers.
+- FastHTML UI serves as independent web interface, using same Cache and Models for data access with in-memory caching layer for performance.
 
 ## Critical Implementation Paths
 - **Scan Flow**: cli.scan() -> ZinfoScanner.scan() -> os.walk -> extract_metadata (parse zinfo.txt) -> ResourceMetadata -> Cache.store_scan_result().
 - **Query Flow**: cli.query() (stub) -> Cache.get_resources_by_type() -> filter/output.
+- **Web UI Flow**: FastHTML routes -> Cache queries -> FT component composition -> automatic HTML generation -> HTMX dynamic updates.
 - **Extending Parsers**: Subclass BaseScanner, override can_handle_file and extract_metadata, register in CLI.
 - **Incremental Cache**: Future: Compare last_modified vs last_indexed to update only changed resources.
