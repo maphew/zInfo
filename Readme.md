@@ -134,24 +134,45 @@ title: My Project
 shortname: my-project
 summary: A brief description of what this project does
 description: A more detailed explanation of the project's purpose and goals
-authors: John Doe <john@example.com>, @johndoe
+team: Jane Doe <jane@example.ca> @janedoe; Sam Gamgee, @samwise;
 date_started: 2024-01-15
-last_update: 2024-09-21
-client: Example Corp
-contact: project-lead@example.com
+date_updated: 2024-09-21
+client: Dept of Environment
+client_contact: project-lead@example-org.net
+status: Complete
 ```
 
-**Supported Fields:**
-- `title` (required): Project name (max 100 chars)
+#### First class Fields
+
+**System**
+- `dir_id`: unique id computed at scan time from project folder, hashed into 6 or more characters. Not editable.
+
+**Required**
+- `title`: Project name (max 100 chars)
 - `shortname`: nickname, for casual use, quick typing (max 20 chars)
 - `summary`: Short description (max 200 chars)
 - `description`: Detailed description (max 1000 chars)
-- `authors`: Semicolon-delimited list with email/GitHub handles
-- `date_started`: ISO date when project began
-- `last_update`: ISO date of significant updates
-- `client`: Sponsoring organization
-- `contact`: Main contact person(s)
-- Custom fields: Any additional key-value pairs you need
+- `team`: Primary author(s) or team lead(s). Semicolon-delimited list with name, email, fediverse/social handle.
+  
+**Optional**
+- `internal_ID`: Project ID used by the business unit or team internally
+- `date_begin`: project start date (ISO, all dates are ISO
+- `date_started`: when project work began
+- `date_updated`: date of latest significant milestone
+- `date_due`: ISO date of when project is due or ends
+- `client`: Sponsoring organization or person
+- `client_contact`: Client contact person(s)
+- `status`: Pending, In-progress, On-hold, Complete, Shelved, Perpetual
+- `progress`: 0-100%
+- `priority`: 1 - 4 (low, medium, high, critical)
+- `duration`: calendar time from start to finish
+- `effort_estimate`: estimated effort to complete (days)
+- `effort_actual`: actual effort expended (days)
+- `comment`: notes
+
+#### Custom fields
+- Any additional key-value pairs you need, `key: value`
+
 
 ### Scan Parameters
 

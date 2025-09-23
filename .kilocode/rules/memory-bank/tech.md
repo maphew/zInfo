@@ -46,3 +46,19 @@ Runtime: Standard library (datetime, json, os, logging, sqlite3)
 - **Error Handling**: Collect in lists, log without halting; robust path/file checks
 - **Extensibility**: ABC for scanners; JSON for flexible metadata/errors in DB
 - **Build**: pyproject.toml with setuptools backend; pixi for reproducible env (conda-forge, win-64)
+
+## Single file python scripts
+- 1st line: `#!/usr/bin/env -S uv run --script`
+- use PEP723 header. Example:
+
+    #!/usr/bin/env -S uv run --script
+    # /// script
+    # requires-python = ">=3.12"
+    # dependencies = [
+    #     "click",
+    #     "rich",
+    # ]
+    # ///
+
+- Run with `./script.py ...` or `uv run script.py ...`. 
+- ONLY use `python script.py ...` if uv fails
