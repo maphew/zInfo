@@ -154,7 +154,7 @@ def validate_scan_params(root, profile, custom_depth):
         if custom_depth is None or not isinstance(custom_depth, int) or custom_depth <= 0:
             raise HTTPException(400, "custom_depth must be a positive integer when profile is custom")
 
-def validate_search_params(title, shortname, client, team, author, type_, dir_id):
+def validate_search_params(query, search_title, search_shortname, search_client, search_team, search_author, search_type, search_dir_id):
     """
     Validate search parameters for length and character safety.
 
@@ -162,24 +162,40 @@ def validate_search_params(title, shortname, client, team, author, type_, dir_id
     are used to avoid SQL injection or other issues.
 
     Args:
-        title: Search title parameter
-        shortname: Search shortname parameter
-        client: Search client parameter
-        team: Search team parameter
-        author: Search author parameter
-        type_: Search type parameter
-        dir_id: Search dir_id parameter
+        query: Search query parameter
+        search_title: Boolean flag for title field search
+        search_shortname: Boolean flag for shortname field search
+        search_client: Boolean flag for client field search
+        search_team: Boolean flag for team field search
+        search_author: Boolean flag for author field search
+        search_type: Boolean flag for type field search
+        search_dir_id: Boolean flag for dir_id field search
 
     Raises:
         HTTPException: For invalid parameter lengths or characters
     """
-    for param, value in [('title', title), ('shortname', shortname), ('client', client), ('team', team), ('author', author), ('type', type_), ('dir_id', dir_id)]:
-        if value:
-            value = value.strip()
-            if len(value) > MAX_SEARCH_PARAM_LENGTH:
-                raise HTTPException(400, f"{param} must be {MAX_SEARCH_PARAM_LENGTH} characters or less")
-            if not SEARCH_PARAM_PATTERN.match(value):
-                raise HTTPException(400, f"{param} contains invalid characters")
+    # Validate query parameter
+    if query:
+        query = query.strip()
+        if len(query) > MAX_SEARCH_PARAM_LENGTH:
+            raise HTTPException(400, f"query must be {MAX_SEARCH_PARAM_LENGTH} characters or less")
+        if not SEARCH_PARAM_PATTERN.match(query):
+            raise HTTPException(400, "query contains invalid characters")
+
+    # Validate boolean flags (should be 'true' or empty)
+    boolean_params = {
+        'search_title': search_title,
+        'search_shortname': search_shortname,
+        'search_client': search_client,
+        'search_team': search_team,
+        'search_author': search_author,
+        'search_type': search_type,
+        'search_dir_id': search_dir_id
+    }
+
+    for param, value in boolean_params.items():
+        if value and value != 'true':
+            raise HTTPException(400, f"{param} must be 'true' or empty")
 
 def validate_detail_id(id_):
     """
@@ -329,17 +345,33 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         resources = []
         total_count = 0
 
-    # Search form with labels
+    # Search form with single input and clickable field selection labels
     search_form = Form(
         Fieldset(
             Legend("Search Resources"),
-            Label("Title", Input(name="title", placeholder="Search by title")),
-            Label("Shortname", Input(name="shortname", placeholder="Search by shortname")),
-            Label("Client", Input(name="client", placeholder="Search by client")),
-            Label("Team", Input(name="team", placeholder="Search by team member")),
-            Label("Author", Input(name="author", placeholder="Search by author (legacy)")),
-            Label("Type", Input(name="type", placeholder="Search by type")),
-            Label("Dir ID", Input(name="dir_id", placeholder="Search by dir ID")),
+            Input(name="query", placeholder="Enter search term...", required=True),
+            Div(
+                # Hidden checkboxes for form submission
+                Input(type="checkbox", name="search_title", value="true", checked=True, id="search_title", style="display: none;"),
+                Input(type="checkbox", name="search_shortname", value="true", checked=True, id="search_shortname", style="display: none;"),
+                Input(type="checkbox", name="search_client", value="true", checked=True, id="search_client", style="display: none;"),
+                Input(type="checkbox", name="search_team", value="true", checked=True, id="search_team", style="display: none;"),
+                Input(type="checkbox", name="search_author", value="true", checked=True, id="search_author", style="display: none;"),
+                Input(type="checkbox", name="search_type", value="true", checked=True, id="search_type", style="display: none;"),
+                Input(type="checkbox", name="search_dir_id", value="true", checked=True, id="search_dir_id", style="display: none;"),
+                # Clickable labels that control the hidden checkboxes
+                Div(
+                    Label("Title", for_="search_title", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    Label("Shortname", for_="search_shortname", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    Label("Client", for_="search_client", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    Label("Team", for_="search_team", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    Label("Author", for_="search_author", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    Label("Type", for_="search_type", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    Label("Dir ID", for_="search_dir_id", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;"
+                ),
+                style="display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0;"
+            ),
             Button("Search", type="submit")
         ),
         hx_get="/search",
@@ -381,12 +413,58 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         Grid(search_form, scan_form),
         Card(results_div),
         Card(Div(id="detail")),
+        # JavaScript for clickable field selection labels
+        Script("""
+            function toggleFieldLabel(label, checkboxId) {
+                const checkbox = document.getElementById(checkboxId);
+                const isChecked = checkbox.checked;
+
+                if (isChecked) {
+                    // Disable field - muted styling
+                    label.style.fontWeight = 'normal';
+                    label.style.color = '#666';
+                    label.style.backgroundColor = 'transparent';
+                    checkbox.checked = false;
+                } else {
+                    // Enable field - bold/bright styling
+                    label.style.fontWeight = 'bold';
+                    label.style.color = '#007acc';
+                    label.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
+                    checkbox.checked = true;
+                }
+            }
+
+            // Add click handlers to all field labels
+            document.addEventListener('DOMContentLoaded', function() {
+                const fieldLabels = [
+                    { label: 'Title', checkbox: 'search_title' },
+                    { label: 'Shortname', checkbox: 'search_shortname' },
+                    { label: 'Client', checkbox: 'search_client' },
+                    { label: 'Team', checkbox: 'search_team' },
+                    { label: 'Author', checkbox: 'search_author' },
+                    { label: 'Type', checkbox: 'search_type' },
+                    { label: 'Dir ID', checkbox: 'search_dir_id' }
+                ];
+
+                fieldLabels.forEach(field => {
+                    const labelElement = Array.from(document.querySelectorAll('label')).find(el =>
+                        el.textContent.trim() === field.label
+                    );
+                    if (labelElement) {
+                        labelElement.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            toggleFieldLabel(this, field.checkbox);
+                        });
+                    }
+                });
+            });
+        """)
     )
 
 @rt("/search")
-def search(request, title: str = "", shortname: str = "", client: str = "", team: str = "", author: str = "", type: str = "", dir_id: str = "", page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
+def search(request, query: str = "", search_title: str = "", search_shortname: str = "", search_client: str = "", search_team: str = "", search_author: str = "", search_type: str = "", search_dir_id: str = "", page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
     """
-    Search resources by title, author, type, and/or ID with pagination.
+    Search resources using a single query term with field selection checkboxes.
 
     Filters resources based on provided search criteria. Uses caching to improve
     performance for repeated searches with same parameters.
@@ -397,38 +475,50 @@ def search(request, title: str = "", shortname: str = "", client: str = "", team
 
     Args:
         request: FastHTML request object (used to detect HTMX requests)
-        title: Search term for resource titles
-        author: Search term for resource authors
-        type: Search term for resource types
-        id: Search term for resource IDs
+        query: Search term to look for
+        search_title: Boolean flag to search in title field
+        search_shortname: Boolean flag to search in shortname field
+        search_client: Boolean flag to search in client field
+        search_team: Boolean flag to search in team field
+        search_author: Boolean flag to search in author field
+        search_type: Boolean flag to search in type field
+        search_dir_id: Boolean flag to search in dir_id field
         page: Page number for pagination
         limit: Number of results per page
 
     Returns:
         HTML content - table fragment for HTMX, full page otherwise
     """
-    validate_search_params(title, shortname, client, team, author, type, dir_id)
+    validate_search_params(query, search_title, search_shortname, search_client, search_team, search_author, search_type, search_dir_id)
     validate_pagination_params(page, limit)
     db_path = os.getenv("ZINFO_DB_PATH", DEFAULT_DB_PATH)
     try:
         cache = Cache(Path(db_path))
 
-        # Build search parameters dict, filtering out empty values
+        # Check if any search fields are enabled
+        enabled_fields = [search_title, search_shortname, search_client, search_team, search_author, search_type, search_dir_id]
+        any_field_enabled = any(field == "true" for field in enabled_fields)
+
+        # Build search parameters dict based on enabled fields
         search_params = {}
-        if title.strip():
-            search_params['title'] = title.strip()
-        if shortname.strip():
-            search_params['shortname'] = shortname.strip()
-        if client.strip():
-            search_params['client'] = client.strip()
-        if team.strip():
-            search_params['team'] = team.strip()
-        if author.strip():
-            search_params['author'] = author.strip()
-        if type.strip():
-            search_params['metadata_type'] = type.strip()
-        if dir_id.strip():
-            search_params['dir_id'] = dir_id.strip()
+        if query.strip() and any_field_enabled:
+            search_term = query.strip()
+
+            # Only add fields to search if their corresponding checkbox is enabled
+            if search_title == "true":
+                search_params['title'] = search_term
+            if search_shortname == "true":
+                search_params['shortname'] = search_term
+            if search_client == "true":
+                search_params['client'] = search_term
+            if search_team == "true":
+                search_params['team'] = search_term
+            if search_author == "true":
+                search_params['author'] = search_term
+            if search_type == "true":
+                search_params['metadata_type'] = search_term
+            if search_dir_id == "true":
+                search_params['dir_id'] = search_term
 
         offset = (page - 1) * limit
         # Create cache key from sorted params to ensure consistent hashing
@@ -446,9 +536,13 @@ def search(request, title: str = "", shortname: str = "", client: str = "", team
         logging.error(f"Error searching resources: {e}", exc_info=True)
         content = P("An error occurred while searching. Please try again.")
     else:
-        # Preserve search parameters in pagination links
-        extra_params = f"&title={title}&shortname={shortname}&client={client}&team={team}&author={author}&type={type}&dir_id={dir_id}"
-        content = build_resource_table(resources, total_count, page, limit, "/search", extra_params, "No matching resources found.")
+        # Handle edge case where no search fields are enabled
+        if query.strip() and not any_field_enabled:
+            content = P("Please select at least one field to search in.")
+        else:
+            # Preserve search parameters in pagination links
+            extra_params = f"&query={query}&search_title={search_title}&search_shortname={search_shortname}&search_client={search_client}&search_team={search_team}&search_author={search_author}&search_type={search_type}&search_dir_id={search_dir_id}"
+            content = build_resource_table(resources, total_count, page, limit, "/search", extra_params, "No matching resources found.")
 
     # HTMX requests get only the content fragment, direct requests get full page
     if request.headers.get("HX-Request"):
