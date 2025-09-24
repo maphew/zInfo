@@ -9,7 +9,7 @@ zInfo is a command-line tool that scans directory trees to locate and index "int
 - **Modular Architecture**: Extensible scanner system supporting multiple metadata formats
 - **SQLite Caching**: Persistent indexing with fast lookups and incremental updates
 - **CLI Interface**: Simple command-line interface for scanning and querying
-- **UI Framework**: Extensible UI framework with NullUI for headless usage
+- **Web UI**: FastHTML-based web interface for browsing, searching, filtering, and in-app scanning
 - **Cross-Platform**: Works on Windows, Linux, and macOS
 - **Metadata Extraction**: Parses project metadata from text files
 - **Error Handling**: Robust error collection and reporting
@@ -55,8 +55,20 @@ zinfo query --all --limit 50
 # Filter by title (partial match)
 zinfo query --title "web"
 
-# Filter by author (searches in extra fields and contact)
+# Filter by author (searches in team field)
 zinfo query --author "jonah"
+
+# Filter by shortname
+zinfo query --shortname "web"
+
+# Filter by client
+zinfo query --client "Dept"
+
+# Filter by team
+zinfo query --team "matt"
+
+# Filter by directory ID
+zinfo query --dir-id "abc123"
 
 # Filter by metadata type
 zinfo query --type "zinfo_project"
@@ -91,37 +103,24 @@ zinfo query --after 2024-01 --date-field last_modified
 zinfo query --after 2024-01 --title "Research" --format table --limit 5
 ```
 
-## UI Framework
+## Web UI
 
-zInfo provides a headless UI framework designed for CLI-only usage and as a foundation for future GUI implementations:
+zInfo provides a complete web-based interface built with FastHTML for browsing, searching, filtering, and managing your project index.
 
-### Running the GUI
+### Running the Web UI
+
+Launch the web interface:
 
 ```bash
-# Launch the GUI application (headless mode)
-zinfo-gui
+# Start the web server
+zinfo-web
 
-# Launch with specific cache database
-zinfo-gui /path/to/cache.db
+# Access at http://localhost:5001 by default
 ```
 
-### UI Features
+The web UI provides the same powerful querying capabilities as the CLI, with an intuitive graphical interface for discovery and management.
 
-- **Headless Operation**: No-op implementations for all UI operations
-- **CLI Integration**: Seamless fallback for command-line environments
-- **Error Logging**: User-friendly error messages logged to console
-- **Testing Support**: Suitable for automated testing and CI/CD pipelines
-- **Extensibility**: Abstract interfaces ready for future GUI framework integrations
-
-### UI Architecture
-
-The UI follows a modular architecture with abstract interfaces:
-
-- **Framework-Agnostic Layer**: Abstract interfaces for UI operations
-- **NullUI Implementation**: Headless/no-op implementation for CLI usage
-- **Application Controller**: Coordinates UI and core functionality
-
-For detailed UI documentation, see [UI README](src/zinfo/ui/README.md).
+For detailed UI documentation and features, see [`src/zinfo/ui/README.md`](src/zinfo/ui/README.md).
 
 ## Configuration
 
@@ -194,7 +193,11 @@ Soft max: after this limit chararcters might be muted, elided, or not shown in t
 - `--cache-db`: SQLite database file location (default: zinfo.db)
 - `--verbose`: Enable detailed logging
 - `--title`, `-t`: Filter by title (partial match)
-- `--author`, `-a`: Filter by author (searches in extra fields and contact)
+- `--author`, `-a`: Filter by author (searches in team field)
+- `--shortname`, `-s`: Filter by shortname (partial match)
+- `--client`, `-C`: Filter by client (partial match)
+- `--team`, `-m`: Filter by team (partial match)
+- `--dir-id`, `-d`: Filter by dir_id (partial match)
 - `--type`, `-T`: Filter by metadata type
 - `--limit`, `-l`: Limit number of results
 - `--format`, `-f`: Output format (table, detailed, json)
@@ -256,9 +259,12 @@ src/zinfo/
 ├── ui/                 # User interface framework
 │   ├── __init__.py     # Abstract UI interfaces
 │   ├── app.py          # Application controller
-│   ├── main.py         # GUI entry point
+│   ├── fh_ui.py        # FastHTML web UI
+│   ├── main.py         # NullUI entry point
 │   ├── null_ui.py      # Headless UI implementation
-│   └── README.md       # GUI documentation
+│   ├── static/         # Static assets
+│   │   └── script.js   # HTMX scripts
+│   └── README.md       # UI documentation
 tests/                  # Test suite
 tickets/                # Enhancement tickets
 ```

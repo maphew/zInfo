@@ -1,17 +1,19 @@
-# zInfo GUI
+# zInfo UI
 
-A modular, framework-agnostic graphical user interface for the zInfo project indexing system. The architecture supports easy integration of new UI frameworks while maintaining clean separation between UI and business logic. Currently defaults to NullUI for headless/CLI-only usage.
+A modular user interface system for zInfo, providing both a headless NullUI implementation for CLI-only environments and a complete FastHTML-based web interface for browsing, searching, filtering, and managing project indexes. The architecture supports clean separation between UI and business logic with extensible framework integration.
 
 ## Features
 
+- **Web Interface**: Complete FastHTML-based web UI for browsing, searching, and filtering projects
+- **In-App Scanning**: Trigger directory scans directly from the web interface
+- **Responsive Design**: Mobile-friendly interface with card-based layouts
+- **HTMX Integration**: Dynamic updates without full page reloads
+- **Pico CSS Styling**: Clean, professional interface with no custom CSS
+- **Pagination**: Efficient browsing of large project indexes
 - **Framework Agnostic**: Pluggable architecture supporting multiple UI frameworks
-- **Scan Interface**: Configure and run directory scans with progress indicators
-- **Query Interface**: Search and filter indexed projects with advanced filtering options
-- **Results Display**: View results in sortable tables with detailed project information
-- **Error Handling**: User-friendly error messages and notifications
-- **Settings Management**: Configure scan parameters and application preferences
-- **Extensible**: Easy to add new UI frameworks via abstract interfaces
 - **Headless Support**: NullUI implementation for CLI-only environments
+- **Error Handling**: User-friendly error messages and notifications
+- **Extensible**: Easy to add new UI frameworks via abstract interfaces
 
 ## Architecture
 
@@ -19,44 +21,64 @@ The GUI follows a modular architecture with clean separation of concerns:
 
 ### Layers
 
-1. **UI Layer**: Framework-specific implementations (e.g., `null_ui.py` for headless)
-2. **Interface Layer** (`__init__.py`): Abstract base classes and protocols for framework-agnostic design
-3. **Application Layer** (`app.py`): Business logic and coordination between UI and core
-4. **Core Layer**: Existing zinfo functionality (models, scanner, cache)
+1. **Web UI Layer** (`fh_ui.py`): FastHTML-based web interface with HTMX and Pico CSS
+2. **Headless UI Layer** (`null_ui.py`): NullUI implementation for CLI-only environments
+3. **Interface Layer** (`__init__.py`): Abstract base classes and protocols for framework-agnostic design
+4. **Application Layer** (`app.py`): Business logic and coordination between UI and core
+5. **Core Layer**: Existing zinfo functionality (models, scanner, cache)
 
 ### Key Components
 
+- **`fh_ui.py`**: FastHTML web application with routes for browsing, searching, and scanning
 - **`AbstractUI`**: Abstract base class defining the UI interface
 - **`AbstractProgressDialog`**: Interface for progress dialog components
 - **`AbstractTableWidget`**: Interface for table display components
 - **`AbstractFormWidget`**: Interface for form input components
 - **`NullUI`**: Headless implementation for CLI-only usage
 - **`ZinfoApp`**: Application controller coordinating UI and core functionality
+- **`static/script.js`**: HTMX scripts for dynamic web interactions
 
 ## Usage
 
-### Running the GUI
+### Running the Web UI
 
-The GUI currently defaults to NullUI for headless/CLI-only usage. Future UI framework implementations can be added following the developer guide.
+The primary user interface is the FastHTML-based web application:
 
 ```bash
-# Install core dependencies
+# Install dependencies
 uv sync
 
-# Run the GUI application (currently defaults to NullUI - headless)
-uv run zinfo-gui
+# Start the web server
+uv run zinfo-web
 
-# Future: Run with specific UI framework (when implemented)
-# ZINFO_GUI=tkinter uv run zinfo-gui
-# uv run zinfo-gui --gui qt
+# Access at http://localhost:5001 by default
+```
+
+### Running the Headless GUI
+
+For CLI-only environments, the NullUI implementation is available:
+
+```bash
+# Run the headless GUI application
+uv run zinfo-gui
 
 # Specify a cache database path:
 uv run zinfo-gui /path/to/cache.db
 ```
 
-### Current Behavior (NullUI)
+### Web UI Features
 
-Since the current implementation uses NullUI for headless operation:
+The FastHTML web interface provides:
+
+1. **Browse Projects**: View all indexed projects in a paginated, card-based layout
+2. **Search and Filter**: Real-time search with filters for title, client, team, and more
+3. **In-App Scanning**: Configure and trigger directory scans with progress feedback
+4. **Project Details**: View detailed information for individual projects
+5. **Responsive Design**: Works on desktop, tablet, and mobile devices
+
+### NullUI Behavior
+
+The NullUI implementation provides headless operation for CLI environments:
 
 - Scan and query dialogs return `None` (cancelled)
 - Results tables and progress dialogs are no-op
@@ -64,16 +86,6 @@ Since the current implementation uses NullUI for headless operation:
 - Confirmation dialogs always return `False`
 
 This allows the core application logic to run without a graphical interface, suitable for CLI automation and testing.
-
-### Future GUI Usage
-
-When GUI frameworks are implemented, the interface will provide:
-
-1. **Scan Directory**: Configure and run directory scans with progress feedback
-2. **Query Projects**: Search and filter indexed projects
-3. **View Results**: Browse results in interactive tables
-4. **Settings**: Configure application preferences
-5. **About**: View application information
 
 ## Development
 
@@ -88,8 +100,10 @@ The UI system is built around abstract base classes that define the interface an
 
 ### Current Implementation
 
+- **`fh_ui.py`**: Complete FastHTML web application with idiomatic patterns
 - **`NullUI`**: Headless implementation for CLI/testing environments
 - **`ZinfoApp`**: Application controller that coordinates UI and core logic
+- **`static/script.js`**: HTMX scripts for dynamic interactions
 
 ### Adding New UI Frameworks
 
@@ -101,23 +115,24 @@ For detailed instructions on adding new UI frameworks, see [`DEVELOPER_GUIDE.md`
 # Run all UI tests
 uv run pytest tests/ui/
 
+# Run FastHTML web UI tests
+uv run pytest tests/ui/test_fh_ui.py
+
 # Run abstract interface contract tests
 uv run pytest tests/ui/test_abstract_ui.py
 
 # Run NullUI implementation tests
 uv run pytest tests/ui/test_null_ui.py
-
-# Future: Run framework-specific tests
-# uv run pytest tests/ui/test_tkinter_ui.py
 ```
 
 ## Dependencies
 
 - **zinfo**: Core project indexing functionality
 - **Python 3.11+**: Minimum Python version
-- **UI Frameworks**: None currently required (NullUI is framework-agnostic)
+- **FastHTML**: Web framework for the web UI (python-fasthtml)
+- **UI Frameworks**: None required for NullUI (framework-agnostic)
 
-Future UI framework implementations may add dependencies:
+Future native UI framework implementations may add dependencies:
 - Tkinter (usually built-in with Python)
 - PyQt6/PySide6 for Qt-based interfaces
 - Toga for cross-platform native widgets
@@ -137,10 +152,11 @@ The UI system supports the following configuration options:
 
 ### Common Issues
 
-1. **NullUI Behavior**: Current implementation is headless - dialogs return None/cancelled
-2. **Database Errors**: Check file permissions and path validity for cache database
-3. **Import Errors**: Ensure all dependencies are installed via `uv sync`
-4. **Framework Selection**: Currently only NullUI is supported
+1. **Web UI Not Starting**: Ensure FastHTML is installed and port 5001 is available
+2. **NullUI Behavior**: Headless implementation - dialogs return None/cancelled
+3. **Database Errors**: Check file permissions and path validity for cache database
+4. **Import Errors**: Ensure all dependencies are installed via `uv sync`
+5. **Scan Not Working**: Verify zinfo scan has been run first to populate the database
 
 ### Debug Mode
 
@@ -164,8 +180,9 @@ When contributing to the GUI system:
 
 ## Future Enhancements
 
-- [ ] Implement concrete UI frameworks (Tkinter, Qt, Toga, etc.)
-- [ ] Advanced filtering and sorting in result tables
+- [x] FastHTML web UI implementation (completed)
+- [ ] Implement concrete native UI frameworks (Tkinter, Qt, Toga, etc.)
+- [ ] Advanced filtering and sorting in web UI
 - [ ] Export functionality (CSV, JSON, HTML)
 - [ ] Drag-and-drop file operations
 - [ ] Keyboard shortcuts and hotkeys
