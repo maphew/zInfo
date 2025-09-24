@@ -12,17 +12,29 @@ from typing import Optional, Dict, Any, List
 
 @dataclass
 class ResourceMetadata:
-    """Base metadata for any indexed resource."""
+    """Metadata for zInfo project resources."""
 
-    id: str  # Unique identifier (e.g., relative path)
-    title: str
-    link: str
-    contact: str
-    doc_dir: Optional[Path] = None
+    # System fields (computed)
+    dir_id: str  # 6+ char hash
+    dir_path: str  # fully resolved path
+
+    # Required fields
+    title: str  # soft max 50
+    shortname: str  # soft max 15
+    summary: str  # soft max 150
+    client: str
+    team: str  # semicolon-delimited
+    contact_email: str
+    location: str  # relative path to zinfo file
+
+    # System timestamps
     last_modified: Optional[datetime] = None
     last_indexed: Optional[datetime] = None
-    metadata_type: str = "resource"  # For polymorphic handling
-    extra: Optional[Dict[str, Any]] = None  # Additional metadata fields
+    metadata_type: str = "zinfo_project"
+
+    # Optional structured fields
+    optional_fields: Optional[Dict[str, Any]] = None
+    custom_fields: Optional[Dict[str, Any]] = None
 
 
 @dataclass

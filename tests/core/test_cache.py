@@ -33,14 +33,19 @@ def cache(temp_db):
 def sample_resource():
     """Create a sample resource for testing."""
     return ResourceMetadata(
-        id="test/resource1",
+        dir_id="test123",
+        dir_path="/test/path",
         title="Test Resource",
-        link="file://test.txt",
-        contact="test@example.com",
-        doc_dir=Path("/test/docs"),
+        shortname="Test",
+        summary="A test resource",
+        client="Test Client",
+        team="Test Team",
+        contact_email="test@example.com",
+        location="zinfo.txt",
         last_modified=datetime.now(),
         last_indexed=datetime.now(),
-        extra={"key": "value"},
+        optional_fields={"key": "value"},
+        custom_fields={"custom": "data"},
     )
 
 
@@ -65,15 +70,19 @@ def test_cache_init(cache):
 def test_store_resource(cache, sample_resource):
     """Test storing and retrieving a resource."""
     cache.store_resource(sample_resource)
-    retrieved = cache.get_resource(sample_resource.id)
+    retrieved = cache.get_resource(sample_resource.dir_id)
 
     assert retrieved is not None
-    assert retrieved.id == sample_resource.id
+    assert retrieved.dir_id == sample_resource.dir_id
     assert retrieved.title == sample_resource.title
-    assert retrieved.link == sample_resource.link
-    assert retrieved.contact == sample_resource.contact
-    assert retrieved.doc_dir == sample_resource.doc_dir
-    assert retrieved.extra == sample_resource.extra
+    assert retrieved.shortname == sample_resource.shortname
+    assert retrieved.summary == sample_resource.summary
+    assert retrieved.client == sample_resource.client
+    assert retrieved.team == sample_resource.team
+    assert retrieved.contact_email == sample_resource.contact_email
+    assert retrieved.location == sample_resource.location
+    assert retrieved.optional_fields == sample_resource.optional_fields
+    assert retrieved.custom_fields == sample_resource.custom_fields
 
 
 def test_store_scan_result(cache, sample_scan_result):
@@ -92,9 +101,9 @@ def test_get_resources_by_type(cache, sample_resource):
     """Test retrieving resources by type."""
     cache.store_resource(sample_resource)
 
-    resources = list(cache.get_resources_by_type("resource"))
+    resources = list(cache.get_resources_by_type("zinfo_project"))
     assert len(resources) == 1
-    assert resources[0].id == sample_resource.id
+    assert resources[0].dir_id == sample_resource.dir_id
 
 
 def test_resource_not_found(cache):
@@ -113,15 +122,20 @@ def test_update_existing_resource(cache, sample_resource):
 
     # Modify and store again
     updated_resource = ResourceMetadata(
-        id=sample_resource.id,  # Same ID
+        dir_id=sample_resource.dir_id,  # Same dir_id
+        dir_path=sample_resource.dir_path,
         title="Updated Title",
-        link=sample_resource.link,
-        contact=sample_resource.contact,
+        shortname=sample_resource.shortname,
+        summary=sample_resource.summary,
+        client=sample_resource.client,
+        team=sample_resource.team,
+        contact_email=sample_resource.contact_email,
+        location=sample_resource.location,
     )
     cache.store_resource(updated_resource)
 
     # Retrieve and verify
-    retrieved = cache.get_resource(sample_resource.id)
+    retrieved = cache.get_resource(sample_resource.dir_id)
     assert retrieved is not None
     assert retrieved.title == "Updated Title"
 
@@ -133,7 +147,7 @@ def test_search_resources_by_title(cache, sample_resource):
     # Search by title
     results, _ = cache.search_resources(title="Test")
     assert len(results) == 1
-    assert results[0].id == sample_resource.id
+    assert results[0].dir_id == sample_resource.dir_id
 
     # Search with no matches
     results, _ = cache.search_resources(title="Nonexistent")
@@ -142,24 +156,30 @@ def test_search_resources_by_title(cache, sample_resource):
 
 def test_search_resources_by_author(cache, sample_resource):
     """Test searching resources by author."""
-    # Add author to extra field
+    # Add author to team field
     resource_with_author = ResourceMetadata(
-        id="test/resource2",
+        dir_id="test456",
+        dir_path="/test/path2",
         title="Resource with Author",
-        link="file://test2.txt",
-        contact="test@example.com",
-        extra={"authors": "John Doe"}
+        shortname="Auth",
+        summary="Resource with author",
+        client="Test Client",
+        team="John Doe",
+        contact_email="test@example.com",
+        location="zinfo.txt",
+        optional_fields={"authors": "John Doe"}
     )
     cache.store_resource(resource_with_author)
 
-    # Search by author
+    # Search by author (in team field)
     results, _ = cache.search_resources(author="John")
     assert len(results) == 1
-    assert results[0].id == "test/resource2"
+    assert results[0].dir_id == "test456"
 
-    # Search by contact
-    results, _ = cache.search_resources(author="test@example.com")
-    assert len(results) >= 1  # Should find the resource with this contact
+    # Search by team field directly
+    results, _ = cache.search_resources(team="Doe")
+    assert len(results) == 1
+    assert results[0].dir_id == "test456"
 
 
 def test_get_all_resources(cache, sample_resource):
@@ -168,7 +188,7 @@ def test_get_all_resources(cache, sample_resource):
 
     resources, _ = cache.get_all_resources()
     assert len(resources) == 1
-    assert resources[0].id == sample_resource.id
+    assert resources[0].dir_id == sample_resource.dir_id
 
 
 def test_get_resource_count(cache, sample_resource):
@@ -229,23 +249,33 @@ def test_search_resources_with_date_filtering(cache):
 
     # Create resources with different dates
     resource1 = ResourceMetadata(
-        id="test/resource1",
+        dir_id="test111",
+        dir_path="/test/path1",
         title="Resource 1",
-        link="file://test1.txt",
-        contact="test@example.com",
+        shortname="Res1",
+        summary="First resource",
+        client="Client A",
+        team="Team A",
+        contact_email="test@example.com",
+        location="zinfo.txt",
         last_modified=datetime(2024, 1, 15),
         last_indexed=datetime.now(),
-        extra={"created": "2024-01-15"}
+        optional_fields={"created": "2024-01-15"}
     )
 
     resource2 = ResourceMetadata(
-        id="test/resource2",
+        dir_id="test222",
+        dir_path="/test/path2",
         title="Resource 2",
-        link="file://test2.txt",
-        contact="test@example.com",
+        shortname="Res2",
+        summary="Second resource",
+        client="Client B",
+        team="Team B",
+        contact_email="test@example.com",
+        location="zinfo.txt",
         last_modified=datetime(2024, 6, 15),
         last_indexed=datetime.now(),
-        extra={"created": "2024-06-15"}
+        optional_fields={"created": "2024-06-15"}
     )
 
     cache.store_resource(resource1)
@@ -255,12 +285,12 @@ def test_search_resources_with_date_filtering(cache):
     after_date = datetime(2024, 3, 1)
     results, _ = cache.search_resources(after_date=after_date, date_field="created")
     assert len(results) == 1
-    assert results[0].id == "test/resource2"
+    assert results[0].dir_id == "test222"
 
     # Test filtering by database date (last_modified)
     results, _ = cache.search_resources(after_date=after_date, date_field="last_modified")
     assert len(results) == 1
-    assert results[0].id == "test/resource2"
+    assert results[0].dir_id == "test222"
 
     # Test date range filtering
     before_date = datetime(2024, 3, 1)
@@ -270,4 +300,4 @@ def test_search_resources_with_date_filtering(cache):
         date_field="created"
     )
     assert len(results) == 1
-    assert results[0].id == "test/resource1"
+    assert results[0].dir_id == "test111"

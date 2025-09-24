@@ -154,7 +154,7 @@ def validate_scan_params(root, profile, custom_depth):
         if custom_depth is None or not isinstance(custom_depth, int) or custom_depth <= 0:
             raise HTTPException(400, "custom_depth must be a positive integer when profile is custom")
 
-def validate_search_params(title, author, type_, id_):
+def validate_search_params(title, shortname, client, team, author, type_, dir_id):
     """
     Validate search parameters for length and character safety.
 
@@ -163,14 +163,17 @@ def validate_search_params(title, author, type_, id_):
 
     Args:
         title: Search title parameter
+        shortname: Search shortname parameter
+        client: Search client parameter
+        team: Search team parameter
         author: Search author parameter
         type_: Search type parameter
-        id_: Search ID parameter
+        dir_id: Search dir_id parameter
 
     Raises:
         HTTPException: For invalid parameter lengths or characters
     """
-    for param, value in [('title', title), ('author', author), ('type', type_), ('id', id_)]:
+    for param, value in [('title', title), ('shortname', shortname), ('client', client), ('team', team), ('author', author), ('type', type_), ('dir_id', dir_id)]:
         if value:
             value = value.strip()
             if len(value) > MAX_SEARCH_PARAM_LENGTH:
@@ -265,15 +268,16 @@ def build_resource_table(resources, total_count=None, page=DEFAULT_PAGE, limit=D
     # Build table rows with HTMX-powered detail links
     table_rows = [
         Tr(
-            Td(A(resource.title, hx_get=f"/detail?id={resource.id}", hx_target="#detail", hx_swap="innerHTML")),
-            Td(resource.metadata_type),
-            Td(resource.id),
-            Td(resource.link)
+            Td(A(resource.title, hx_get=f"/detail?id={resource.dir_id}", hx_target="#detail", hx_swap="innerHTML")),
+            Td(resource.shortname),
+            Td(resource.client),
+            Td(resource.dir_id),
+            Td(resource.location)
         ) for resource in resources
     ]
 
     table = Table(
-        Thead(Tr(Th("Title"), Th("Type"), Th("ID"), Th("Path"))),
+        Thead(Tr(Th("Title"), Th("Shortname"), Th("Client"), Th("Dir ID"), Th("Location"))),
         Tbody(*table_rows)
     )
 
@@ -330,9 +334,12 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         Fieldset(
             Legend("Search Resources"),
             Label("Title", Input(name="title", placeholder="Search by title")),
-            Label("Author", Input(name="author", placeholder="Search by author")),
+            Label("Shortname", Input(name="shortname", placeholder="Search by shortname")),
+            Label("Client", Input(name="client", placeholder="Search by client")),
+            Label("Team", Input(name="team", placeholder="Search by team member")),
+            Label("Author", Input(name="author", placeholder="Search by author (legacy)")),
             Label("Type", Input(name="type", placeholder="Search by type")),
-            Label("ID", Input(name="id", placeholder="Search by ID")),
+            Label("Dir ID", Input(name="dir_id", placeholder="Search by dir ID")),
             Button("Search", type="submit")
         ),
         hx_get="/search",
@@ -356,6 +363,7 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         ),
         Div(id="scan-status"),
         Div(
+            Div(id="validation-errors"),
             Div(id="scan-errors"),
             Div(id="scan-success"),
             id="scan-results"
@@ -376,7 +384,7 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
     )
 
 @rt("/search")
-def search(request, title: str = "", author: str = "", type: str = "", id: str = "", page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
+def search(request, title: str = "", shortname: str = "", client: str = "", team: str = "", author: str = "", type: str = "", dir_id: str = "", page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
     """
     Search resources by title, author, type, and/or ID with pagination.
 
@@ -399,7 +407,7 @@ def search(request, title: str = "", author: str = "", type: str = "", id: str =
     Returns:
         HTML content - table fragment for HTMX, full page otherwise
     """
-    validate_search_params(title, author, type, id)
+    validate_search_params(title, shortname, client, team, author, type, dir_id)
     validate_pagination_params(page, limit)
     db_path = os.getenv("ZINFO_DB_PATH", DEFAULT_DB_PATH)
     try:
@@ -409,12 +417,18 @@ def search(request, title: str = "", author: str = "", type: str = "", id: str =
         search_params = {}
         if title.strip():
             search_params['title'] = title.strip()
+        if shortname.strip():
+            search_params['shortname'] = shortname.strip()
+        if client.strip():
+            search_params['client'] = client.strip()
+        if team.strip():
+            search_params['team'] = team.strip()
         if author.strip():
             search_params['author'] = author.strip()
         if type.strip():
             search_params['metadata_type'] = type.strip()
-        if id.strip():
-            search_params['id'] = id.strip()
+        if dir_id.strip():
+            search_params['dir_id'] = dir_id.strip()
 
         offset = (page - 1) * limit
         # Create cache key from sorted params to ensure consistent hashing
@@ -433,7 +447,7 @@ def search(request, title: str = "", author: str = "", type: str = "", id: str =
         content = P("An error occurred while searching. Please try again.")
     else:
         # Preserve search parameters in pagination links
-        extra_params = f"&title={title}&author={author}&type={type}&id={id}"
+        extra_params = f"&title={title}&shortname={shortname}&client={client}&team={team}&author={author}&type={type}&dir_id={dir_id}"
         content = build_resource_table(resources, total_count, page, limit, "/search", extra_params, "No matching resources found.")
 
     # HTMX requests get only the content fragment, direct requests get full page
@@ -476,10 +490,35 @@ def detail(request, id: str):
             # Display comprehensive resource metadata
             panel = Div(
                 H3(resource.title),
-                P(f"Type: {resource.metadata_type}"),
-                P(f"Link: {resource.link}"),
-                P(f"Contact: {resource.contact}"),
-                P(f"Doc Dir: {resource.doc_dir}"),
+                # Required fields prominently
+                Fieldset(
+                    Legend("Required Information"),
+                    P(Strong("Shortname: "), resource.shortname),
+                    P(Strong("Summary: "), resource.summary),
+                    P(Strong("Client: "), resource.client),
+                    P(Strong("Team: "), "; ".join(resource.team.split(";")) if resource.team else "None"),
+                    P(Strong("Contact Email: "), resource.contact_email),
+                    P(Strong("Location: "), resource.location)
+                ),
+                # System fields
+                Fieldset(
+                    Legend("System Information"),
+                    P(Strong("Dir ID: "), resource.dir_id),
+                    P(Strong("Dir Path: "), resource.dir_path),
+                    P(Strong("Type: "), resource.metadata_type),
+                    P(Strong("Last Modified: "), resource.last_modified.isoformat() if resource.last_modified else "Unknown"),
+                    P(Strong("Last Indexed: "), resource.last_indexed.isoformat() if resource.last_indexed else "Unknown")
+                ),
+                # Optional fields organized
+                resource.optional_fields and Fieldset(
+                    Legend("Optional Information"),
+                    *[P(Strong(f"{k.title()}: "), v) for k, v in resource.optional_fields.items()]
+                ),
+                # Custom fields separately
+                resource.custom_fields and Fieldset(
+                    Legend("Custom Fields"),
+                    *[P(Strong(f"{k.title()}: "), v) for k, v in resource.custom_fields.items()]
+                ),
                 id="detail-panel"
             )
             content = panel
@@ -544,17 +583,40 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
         toast_msg = f"Scan completed with {len(result.errors)} errors"
         toast_type = "error"
         status_msg = f"Scan completed with {len(result.errors)} errors, found {result.total_items_found} resources"
+
+        # Display validation errors with guidance
+        error_details = []
+        for error in result.errors:
+            if "missing required field" in error.lower():
+                error_details.append(Div(
+                    H4("Missing Required Fields"),
+                    P("The following zinfo.txt files are missing required fields:"),
+                    Ul(*[Li(err) for err in result.errors if "missing required field" in err.lower()]),
+                    P("Required fields are: title, shortname, summary, client, team, contact_email, location"),
+                    P("Please add these fields to your zinfo.txt files and rescan.")
+                ))
+            else:
+                error_details.append(P(error))
+
+        validation_errors_div = Div(
+            H3("Scan Validation Errors"),
+            *error_details,
+            id="validation-errors"
+        )
     else:
         toast_msg = f"Scan completed successfully, found {result.total_items_found} resources"
         toast_type = "success"
         status_msg = toast_msg
+        validation_errors_div = Div(id="validation-errors")  # Empty when no errors
 
     # Prepare HTMX response elements
     status_div = Div(status_msg, id="scan-status")
     # hx_swap_oob allows updating #results div even though it's not the main target
     results_div = Div(content, id="results", hx_swap_oob="innerHTML")
+    # Update validation errors display
+    validation_div = Div(validation_errors_div, id="validation-errors", hx_swap_oob="innerHTML")
 
-    return status_div, results_div, Toast(toast_msg, typ=toast_type)
+    return status_div, results_div, validation_div, Toast(toast_msg, typ=toast_type)
 
 def run_server(host=DEFAULT_HOST, port=DEFAULT_PORT, reload=True):
     """Start the zInfo FastHTML web UI server."""

@@ -4,47 +4,114 @@ from datetime import datetime
 from pathlib import Path
 
 from zinfo.core.models import ResourceMetadata, ScanResult
+from zinfo.core.id_generator import DirIDGenerator
 
 
 def test_resource_metadata_basic():
     """Test basic ResourceMetadata creation and attributes."""
     metadata = ResourceMetadata(
-        id="test/path",
+        dir_id="test123",
+        dir_path="/test/path",
         title="Test Resource",
-        link="file://test.txt",
-        contact="test@example.com",
+        shortname="Test",
+        summary="A test resource",
+        client="Test Client",
+        team="Test Team",
+        contact_email="test@example.com",
+        location="zinfo.txt",
     )
 
-    assert metadata.id == "test/path"
+    assert metadata.dir_id == "test123"
+    assert metadata.dir_path == "/test/path"
     assert metadata.title == "Test Resource"
-    assert metadata.link == "file://test.txt"
-    assert metadata.contact == "test@example.com"
-    assert metadata.doc_dir is None
-    assert metadata.metadata_type == "resource"
-    assert metadata.extra is None
+    assert metadata.shortname == "Test"
+    assert metadata.summary == "A test resource"
+    assert metadata.client == "Test Client"
+    assert metadata.team == "Test Team"
+    assert metadata.contact_email == "test@example.com"
+    assert metadata.location == "zinfo.txt"
+    assert metadata.metadata_type == "zinfo_project"
+    assert metadata.optional_fields is None
+    assert metadata.custom_fields is None
 
 
 def test_resource_metadata_with_optional():
     """Test ResourceMetadata with optional fields."""
     now = datetime.now()
-    doc_dir = Path("/test/docs")
-    extra = {"key": "value"}
+    optional_fields = {"created": "2024-01-15"}
+    custom_fields = {"custom": "value"}
 
     metadata = ResourceMetadata(
-        id="test/path",
+        dir_id="test123",
+        dir_path="/test/path",
         title="Test Resource",
-        link="file://test.txt",
-        contact="test@example.com",
-        doc_dir=doc_dir,
+        shortname="Test",
+        summary="A test resource",
+        client="Test Client",
+        team="Test Team",
+        contact_email="test@example.com",
+        location="zinfo.txt",
         last_modified=now,
         last_indexed=now,
-        extra=extra,
+        optional_fields=optional_fields,
+        custom_fields=custom_fields,
     )
 
-    assert metadata.doc_dir == doc_dir
     assert metadata.last_modified == now
     assert metadata.last_indexed == now
-    assert metadata.extra == extra
+    assert metadata.optional_fields == optional_fields
+    assert metadata.custom_fields == custom_fields
+
+
+def test_resource_metadata_field_validation():
+    """Test ResourceMetadata field validation."""
+    # Test required fields are present
+    metadata = ResourceMetadata(
+        dir_id="test123",
+        dir_path="/test/path",
+        title="Test Resource",
+        shortname="Test",
+        summary="A test resource",
+        client="Test Client",
+        team="Test Team",
+        contact_email="test@example.com",
+        location="zinfo.txt",
+    )
+
+    # All required fields should be strings
+    assert isinstance(metadata.title, str)
+    assert isinstance(metadata.shortname, str)
+    assert isinstance(metadata.summary, str)
+    assert isinstance(metadata.client, str)
+    assert isinstance(metadata.team, str)
+    assert isinstance(metadata.contact_email, str)
+    assert isinstance(metadata.location, str)
+
+    # System fields
+    assert isinstance(metadata.dir_id, str)
+    assert isinstance(metadata.dir_path, str)
+
+
+def test_dir_id_generation():
+    """Test dir_id generation for ResourceMetadata."""
+    generator = DirIDGenerator()
+
+    # Generate dir_id for a test path
+    test_path = "/test/project/path"
+    dir_id = generator.generate(test_path)
+
+    assert isinstance(dir_id, str)
+    assert len(dir_id) >= 6  # Should be 6+ characters
+
+    # Same path with new generator should generate same dir_id
+    generator2 = DirIDGenerator()
+    dir_id2 = generator2.generate(test_path)
+    assert dir_id == dir_id2
+
+    # Different path should generate different dir_id
+    different_path = "/different/path"
+    dir_id3 = generator.generate(different_path)
+    assert dir_id != dir_id3
 
 
 def test_scan_result():
@@ -53,10 +120,15 @@ def test_scan_result():
     end_time = datetime.now()
 
     metadata = ResourceMetadata(
-        id="test/path",
+        dir_id="test123",
+        dir_path="/test/path",
         title="Test Resource",
-        link="file://test.txt",
-        contact="test@example.com",
+        shortname="Test",
+        summary="A test resource",
+        client="Test Client",
+        team="Test Team",
+        contact_email="test@example.com",
+        location="zinfo.txt",
     )
 
     result = ScanResult(

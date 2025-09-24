@@ -83,12 +83,12 @@ def parse_date(date_str: Optional[str]) -> Optional[datetime]:
         return None
 
 
-def extract_date_from_metadata(extra: Optional[dict], date_field: str) -> Optional[datetime]:
-    """Extract and parse date from metadata extra field."""
-    if not extra or date_field not in extra:
+def extract_date_from_metadata(optional_fields: Optional[dict], date_field: str) -> Optional[datetime]:
+    """Extract and parse date from metadata optional_fields."""
+    if not optional_fields or date_field not in optional_fields:
         return None
 
-    date_value = extra[date_field]
+    date_value = optional_fields[date_field]
     if isinstance(date_value, str):
         return parse_date(date_value)
     elif isinstance(date_value, (int, float)):
@@ -111,30 +111,55 @@ class Cache:
         self._init_db()
 
     def _init_db(self):
-        """Initialize database schema."""
+        """Initialize database schema if not already initialized."""
         conn = sqlite3.connect(
             self.db_path, timeout=self.timeout, detect_types=sqlite3.PARSE_DECLTYPES
         )
         try:
+            # Check if schema is already initialized
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_versions'")
+            if cursor.fetchone():
+                # Schema already exists, don't reinitialize
+                return
+
+            # Drop existing tables for clean break (only if we're initializing fresh)
+            conn.execute("DROP TABLE IF EXISTS resources")
+            conn.execute("DROP TABLE IF EXISTS scans")
+            conn.execute("DROP TABLE IF EXISTS schema_versions")
+
+            # Create new resources table with updated schema
             conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS resources (
-                    id TEXT PRIMARY KEY,
+                CREATE TABLE resources (
+                    -- System fields
+                    dir_id TEXT PRIMARY KEY,
+                    dir_path TEXT NOT NULL,
+
+                    -- Required fields
                     title TEXT NOT NULL,
-                    link TEXT NOT NULL,
-                    contact TEXT NOT NULL,
-                    doc_dir TEXT,
-                    metadata_type TEXT NOT NULL,
+                    shortname TEXT NOT NULL,
+                    summary TEXT NOT NULL,
+                    client TEXT NOT NULL,
+                    team TEXT NOT NULL,
+                    contact_email TEXT NOT NULL,
+                    location TEXT NOT NULL,
+
+                    -- System timestamps
                     last_modified TIMESTAMP,
                     last_indexed TIMESTAMP NOT NULL,
-                    extra JSON
+                    metadata_type TEXT NOT NULL,
+
+                    -- JSON fields for structured optional/custom data
+                    optional_fields JSON,
+                    custom_fields JSON
                 )
             """
             )
 
+            # Recreate scans table (keeping existing structure)
             conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS scans (
+                CREATE TABLE scans (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     start_time TIMESTAMP NOT NULL,
                     end_time TIMESTAMP NOT NULL,
@@ -144,6 +169,23 @@ class Cache:
                 )
             """
             )
+
+            # Create schema version tracking table
+            conn.execute(
+                """
+                CREATE TABLE schema_versions (
+                    version INTEGER PRIMARY KEY,
+                    applied_at TIMESTAMP NOT NULL
+                )
+            """
+            )
+
+            # Record schema version 1
+            conn.execute(
+                "INSERT INTO schema_versions (version, applied_at) VALUES (1, ?)",
+                (datetime.now(),)
+            )
+
             conn.commit()
         finally:
             conn.close()
@@ -157,20 +199,26 @@ class Cache:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO resources
-                (id, title, link, contact, doc_dir, metadata_type,
-                 last_modified, last_indexed, extra)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (dir_id, dir_path, title, shortname, summary, client, team,
+                 contact_email, location, last_modified, last_indexed,
+                 metadata_type, optional_fields, custom_fields)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
-                    resource.id,
+                    resource.dir_id,
+                    resource.dir_path,
                     resource.title,
-                    resource.link,
-                    resource.contact,
-                    str(resource.doc_dir) if resource.doc_dir else None,
-                    resource.metadata_type,
+                    resource.shortname,
+                    resource.summary,
+                    resource.client,
+                    resource.team,
+                    resource.contact_email,
+                    resource.location,
                     resource.last_modified,
                     resource.last_indexed or datetime.now(),
-                    json.dumps(resource.extra) if resource.extra else None,
+                    resource.metadata_type,
+                    json.dumps(resource.optional_fields) if resource.optional_fields else None,
+                    json.dumps(resource.custom_fields) if resource.custom_fields else None,
                 ),
             )
             conn.commit()
@@ -188,20 +236,26 @@ class Cache:
                 conn.execute(
                     """
                     INSERT OR REPLACE INTO resources
-                    (id, title, link, contact, doc_dir, metadata_type,
-                     last_modified, last_indexed, extra)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (dir_id, dir_path, title, shortname, summary, client, team,
+                     contact_email, location, last_modified, last_indexed,
+                     metadata_type, optional_fields, custom_fields)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
-                        item.id,
+                        item.dir_id,
+                        item.dir_path,
                         item.title,
-                        item.link,
-                        item.contact,
-                        str(item.doc_dir) if item.doc_dir else None,
-                        item.metadata_type,
+                        item.shortname,
+                        item.summary,
+                        item.client,
+                        item.team,
+                        item.contact_email,
+                        item.location,
                         item.last_modified,
                         item.last_indexed or datetime.now(),
-                        json.dumps(item.extra) if item.extra else None,
+                        item.metadata_type,
+                        json.dumps(item.optional_fields) if item.optional_fields else None,
+                        json.dumps(item.custom_fields) if item.custom_fields else None,
                     ),
                 )
 
@@ -226,14 +280,14 @@ class Cache:
         finally:
             conn.close()
 
-    def get_resource(self, id: str) -> Optional[ResourceMetadata]:
-        """Retrieve a resource by ID."""
+    def get_resource(self, dir_id: str) -> Optional[ResourceMetadata]:
+        """Retrieve a resource by dir_id."""
         conn = sqlite3.connect(
             self.db_path, timeout=self.timeout, detect_types=sqlite3.PARSE_DECLTYPES
         )
         try:
             conn.row_factory = sqlite3.Row
-            row = conn.execute("SELECT * FROM resources WHERE id = ?", (id,)).fetchone()
+            row = conn.execute("SELECT * FROM resources WHERE dir_id = ?", (dir_id,)).fetchone()
 
             if row:
                 return self._row_to_resource(row)
@@ -274,7 +328,7 @@ class Cache:
 
             if row:
                 return ScanResult(
-                    items=self.get_resources_by_type("resource"),
+                    items=self.get_resources_by_type("zinfo_project"),
                     errors=json.loads(row["errors"]),
                     start_time=row["start_time"],
                     end_time=row["end_time"],
@@ -289,8 +343,11 @@ class Cache:
         self,
         title: Optional[str] = None,
         author: Optional[str] = None,
+        shortname: Optional[str] = None,
+        client: Optional[str] = None,
+        team: Optional[str] = None,
         metadata_type: Optional[str] = None,
-        id: Optional[str] = None,
+        dir_id: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
         after_date: Optional[datetime] = None,
@@ -313,16 +370,52 @@ class Cache:
                 params.append(f"%{title}%")
 
             if author:
-                query_parts.append("AND (extra LIKE ? OR contact LIKE ?)")
-                params.extend([f'%"authors": "%{author}%"%', f"%{author}%"])
+                query_parts.append("AND team LIKE ?")
+                params.append(f"%{author}%")
+
+            if shortname:
+                query_parts.append("AND shortname LIKE ?")
+                params.append(f"%{shortname}%")
+
+            if client:
+                query_parts.append("AND client LIKE ?")
+                params.append(f"%{client}%")
+
+            if team:
+                query_parts.append("AND team LIKE ?")
+                params.append(f"%{team}%")
 
             if metadata_type:
                 query_parts.append("AND metadata_type = ?")
                 params.append(metadata_type)
 
-            if id:
-                query_parts.append("AND id LIKE ?")
-                params.append(f"%{id}%")
+            if dir_id:
+                query_parts.append("AND dir_id LIKE ?")
+                params.append(f"%{dir_id}%")
+
+            # Search in JSON fields for optional/custom data
+            if author or title or shortname or client or team:
+                search_terms = []
+                search_params = []
+                if author:
+                    search_terms.append("(optional_fields LIKE ? OR custom_fields LIKE ?)")
+                    search_params.extend([f"%{author}%", f"%{author}%"])
+                if title:
+                    search_terms.append("(optional_fields LIKE ? OR custom_fields LIKE ?)")
+                    search_params.extend([f"%{title}%", f"%{title}%"])
+                if shortname:
+                    search_terms.append("(optional_fields LIKE ? OR custom_fields LIKE ?)")
+                    search_params.extend([f"%{shortname}%", f"%{shortname}%"])
+                if client:
+                    search_terms.append("(optional_fields LIKE ? OR custom_fields LIKE ?)")
+                    search_params.extend([f"%{client}%", f"%{client}%"])
+                if team:
+                    search_terms.append("(optional_fields LIKE ? OR custom_fields LIKE ?)")
+                    search_params.extend([f"%{team}%", f"%{team}%"])
+
+                if search_terms:
+                    query_parts.append(f"OR ({' OR '.join(search_terms)})")
+                    params.extend(search_params)
 
             # Handle date filtering
             if after_date or before_date:
@@ -335,13 +428,13 @@ class Cache:
                         query_parts.append(f"AND {date_field} <= ?")
                         params.append(before_date)
                 else:
-                    # Use metadata fields from JSON extra
+                    # Use metadata fields from JSON optional_fields
                     # This requires a more complex query since we need to parse JSON
                     if after_date:
-                        query_parts.append(f"AND (extra->>'{date_field}' IS NOT NULL AND datetime(extra->>'{date_field}') >= ?)")
+                        query_parts.append(f"AND (optional_fields->>'{date_field}' IS NOT NULL AND datetime(optional_fields->>'{date_field}') >= ?)")
                         params.append(after_date.isoformat())
                     if before_date:
-                        query_parts.append(f"AND (extra->>'{date_field}' IS NOT NULL AND datetime(extra->>'{date_field}') <= ?)")
+                        query_parts.append(f"AND (optional_fields->>'{date_field}' IS NOT NULL AND datetime(optional_fields->>'{date_field}') <= ?)")
                         params.append(before_date.isoformat())
 
             query_parts.append("ORDER BY last_indexed DESC")
@@ -375,7 +468,7 @@ class Cache:
                 # Additional filtering for metadata date fields (since JSON parsing in SQL is limited)
                 if date_field not in ["last_modified", "last_indexed"]:
                     if after_date or before_date:
-                        metadata_date = extract_date_from_metadata(resource.extra, date_field)
+                        metadata_date = extract_date_from_metadata(resource.optional_fields, date_field)
                         if metadata_date:
                             if after_date and metadata_date < after_date:
                                 continue
@@ -430,13 +523,18 @@ class Cache:
     def _row_to_resource(row: sqlite3.Row) -> ResourceMetadata:
         """Convert a database row to a ResourceMetadata object."""
         return ResourceMetadata(
-            id=row["id"],
+            dir_id=row["dir_id"],
+            dir_path=row["dir_path"],
             title=row["title"],
-            link=row["link"],
-            contact=row["contact"],
-            doc_dir=Path(row["doc_dir"]) if row["doc_dir"] else None,
-            metadata_type=row["metadata_type"],
+            shortname=row["shortname"],
+            summary=row["summary"],
+            client=row["client"],
+            team=row["team"],
+            contact_email=row["contact_email"],
+            location=row["location"],
             last_modified=row["last_modified"],
             last_indexed=row["last_indexed"],
-            extra=json.loads(row["extra"]) if row["extra"] else None,  # type: ignore
+            metadata_type=row["metadata_type"],
+            optional_fields=json.loads(row["optional_fields"]) if row["optional_fields"] else None,
+            custom_fields=json.loads(row["custom_fields"]) if row["custom_fields"] else None,
         )

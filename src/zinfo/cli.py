@@ -54,12 +54,8 @@ def scan(root: Path, depth: int, cache_db: Path, verbose: bool):
     if result.items:
         click.echo("\nFound projects:")
         for item in result.items:
-            extra_info = (
-                f" | Authors: {item.extra.get('authors', 'N/A')}"
-                if item.extra and item.extra.get("authors")
-                else ""
-            )
-            click.echo(f"  - {item.title} ({item.link}){extra_info}")
+            team_info = f" | Team: {item.team}" if item.team else ""
+            click.echo(f"  - {item.title} ({item.location}){team_info}")
     else:
         click.echo("No projects found.")
 
@@ -73,7 +69,11 @@ def scan(root: Path, depth: int, cache_db: Path, verbose: bool):
 )
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging.")
 @click.option("--title", "-t", help="Filter by title (partial match).")
-@click.option("--author", "-a", help="Filter by author (searches in extra fields and contact).")
+@click.option("--author", "-a", help="Filter by author (searches in team field).")
+@click.option("--shortname", "-s", help="Filter by shortname (partial match).")
+@click.option("--client", "-C", help="Filter by client (partial match).")
+@click.option("--team", "-m", help="Filter by team (partial match).")
+@click.option("--dir-id", "-d", help="Filter by dir_id (partial match).")
 @click.option("--type", "-T", "metadata_type", help="Filter by metadata type.")
 @click.option("--limit", "-l", type=int, help="Limit number of results.")
 @click.option("--format", "-f", type=click.Choice(["table", "detailed", "json"]),
@@ -91,6 +91,10 @@ def query(
     verbose: bool,
     title: Optional[str],
     author: Optional[str],
+    shortname: Optional[str],
+    client: Optional[str],
+    team: Optional[str],
+    dir_id: Optional[str],
     metadata_type: Optional[str],
     limit: Optional[int],
     format: str,
@@ -148,7 +152,16 @@ def query(
             click.echo(f"Total resources: {total_count}")
         else:
             # Count with filters
-            results = cache.search_resources(title, author, metadata_type, None)
+            results, _ = cache.search_resources(
+                title=title,
+                author=author,
+                shortname=shortname,
+                client=client,
+                team=team,
+                metadata_type=metadata_type,
+                dir_id=dir_id,
+                limit=None
+            )
             click.echo(f"Matching resources: {len(results)}")
         return
 
@@ -157,10 +170,14 @@ def query(
         title = author = metadata_type = None
         limit = limit or 50  # Default limit for "all" to avoid overwhelming output
 
-    results = cache.search_resources(
+    results, _ = cache.search_resources(
         title=title,
         author=author,
+        shortname=shortname,
+        client=client,
+        team=team,
         metadata_type=metadata_type,
+        dir_id=dir_id,
         limit=limit,
         after_date=after_date,
         before_date=before_date,
@@ -184,15 +201,20 @@ def _display_resources(resources: List[ResourceMetadata], format: str, verbose: 
         data = []
         for resource in resources:
             resource_dict = {
-                "id": resource.id,
+                "dir_id": resource.dir_id,
+                "dir_path": resource.dir_path,
                 "title": resource.title,
-                "link": resource.link,
-                "contact": resource.contact,
-                "doc_dir": str(resource.doc_dir) if resource.doc_dir else None,
+                "shortname": resource.shortname,
+                "summary": resource.summary,
+                "client": resource.client,
+                "team": resource.team,
+                "contact_email": resource.contact_email,
+                "location": resource.location,
                 "metadata_type": resource.metadata_type,
                 "last_modified": resource.last_modified.isoformat() if resource.last_modified else None,
                 "last_indexed": resource.last_indexed.isoformat() if resource.last_indexed else None,
-                "extra": resource.extra
+                "optional_fields": resource.optional_fields,
+                "custom_fields": resource.custom_fields
             }
             data.append(resource_dict)
         click.echo(json.dumps(data, indent=2))
@@ -201,36 +223,55 @@ def _display_resources(resources: List[ResourceMetadata], format: str, verbose: 
         # Detailed text output
         for i, resource in enumerate(resources, 1):
             click.echo(f"\n--- Resource {i} ---")
-            click.echo(f"ID: {resource.id}")
-            click.echo(f"Title: {resource.title}")
-            click.echo(f"Link: {resource.link}")
-            click.echo(f"Contact: {resource.contact}")
-            if resource.doc_dir:
-                click.echo(f"Documentation: {resource.doc_dir}")
-            click.echo(f"Type: {resource.metadata_type}")
+
+            # Required fields
+            click.echo("Required Fields:")
+            click.echo(f"  Dir ID: {resource.dir_id}")
+            click.echo(f"  Title: {resource.title}")
+            click.echo(f"  Shortname: {resource.shortname}")
+            click.echo(f"  Summary: {resource.summary}")
+            click.echo(f"  Client: {resource.client}")
+            click.echo(f"  Team: {resource.team}")
+            click.echo(f"  Contact Email: {resource.contact_email}")
+            click.echo(f"  Location: {resource.location}")
+
+            # System fields
+            click.echo("System Fields:")
+            click.echo(f"  Dir Path: {resource.dir_path}")
+            click.echo(f"  Type: {resource.metadata_type}")
             if resource.last_modified:
-                click.echo(f"Last Modified: {resource.last_modified}")
+                click.echo(f"  Last Modified: {resource.last_modified}")
             if resource.last_indexed:
-                click.echo(f"Last Indexed: {resource.last_indexed}")
-            if resource.extra:
-                click.echo("Additional Info:")
-                for key, value in resource.extra.items():
+                click.echo(f"  Last Indexed: {resource.last_indexed}")
+
+            # Optional fields
+            if resource.optional_fields:
+                click.echo("Optional Fields:")
+                for key, value in resource.optional_fields.items():
+                    click.echo(f"  {key}: {value}")
+
+            # Custom fields
+            if resource.custom_fields:
+                click.echo("Custom Fields:")
+                for key, value in resource.custom_fields.items():
                     click.echo(f"  {key}: {value}")
 
     else:  # table format (default)
         # Table header
-        click.echo("ID                           Title                                    Contact                      Type")
-        click.echo("-" * 105)
+        click.echo("Dir ID      Title                          Shortname    Client              Location")
+        click.echo("-" * 100)
 
         # Table rows
         for resource in resources:
-            id_short = resource.id[:29] + "..." if len(resource.id) > 32 else resource.id
-            title_short = resource.title[:39] + "..." if len(resource.title) > 42 else resource.title
-            contact_short = resource.contact[:24] + "..." if len(resource.contact) > 27 else resource.contact
+            dir_id_short = resource.dir_id[:10] + "..." if len(resource.dir_id) > 13 else resource.dir_id
+            title_short = resource.title[:30] + "..." if len(resource.title) > 33 else resource.title
+            shortname_short = resource.shortname[:12] + "..." if len(resource.shortname) > 15 else resource.shortname
+            client_short = resource.client[:18] + "..." if len(resource.client) > 21 else resource.client
+            location_short = resource.location[:20] + "..." if len(resource.location) > 23 else resource.location
 
             # Use string formatting for table columns
-            row = "{:<30} {:<40} {:<25} {:<10}".format(
-                id_short, title_short, contact_short, resource.metadata_type
+            row = "{:<13} {:<33} {:<15} {:<21} {:<23}".format(
+                dir_id_short, title_short, shortname_short, client_short, location_short
             )
             click.echo(row)
 
