@@ -142,39 +142,43 @@ client_contact: project-lead@example-org.net
 status: Complete
 ```
 
-#### First class Fields
+#### Metadata Fields
 
 **System**
 - `dir_id`: unique id computed at scan time from project folder, hashed into 6 or more characters. Not editable.
-- `dir_path`: fully resolved path to marker file dir
+- `dir_path`: fully resolved path to zinfo file's `location`
 
 **Required**
-- `title`: Project name (max 100 chars)
-- `shortname`: nickname, for casual use, quick typing (max 20 chars)
-- `summary`: Short description (max 200 chars)
-- `description`: Detailed description (max 1000 chars)
-- `team`: Primary author(s) or team lead(s). Semicolon-delimited list with name, email, fediverse/social handle.
-- `location`: path to where the project marker file lives
+- `title`: Project or product name (soft max 50 chars)
+- `shortname`: nickname, for casual use, files & folders, quick typing (soft max 15 chars)
+- `summary`: Short description (soft max 150 chars)
+- `client`: Sponsoring organization or person, who deliverables go to
+- `team`: Primary author(s) or team lead(s), semicolon-delimited list
+    - `contact_email`: email address of team lead/author
+- `location`: path to where the project zinfo file lives
   
+Soft max: after this limit chararcters might be muted, elided, or not shown in the UI.
+
 **Optional**
+- `other_id`: Project or product ID in your other system(s), omma separated
+- `description`: Detailed description (max chars?)
+- `contact_handle:`: social nickname or handle, e.g. @samwise
 - `related_projects`: related project names or IDs
-- `links`: url or file links
-- `internal_ID`: Project ID used by the business unit or team internally
-- `date_begin`: project start date (ISO, all dates are ISO
-- `date_started`: when project work began
+    - `--> name`: this project depends or is child of 'name'
+    - `<-- name`: 'name' depends or is child of this project
+    - `name`: 'name' is related to this project
+- `links`: url or file system links
+- `date_started`: project began on this date (all dates are ISO)
 - `date_updated`: date of latest significant milestone
-- `date_due`: ISO date of when project is due or ends
-- `client`: Sponsoring organization or person
-- `client_contact`: Client contact person(s)
+- `client_contact`: Client contact name(s)
+    - `client_email`: email address of client
+    - `client_handle`: social nickname or handle, e.g. @jwhale
 - `status`: Pending, In-progress, On-hold, Complete, Shelved, Perpetual
-- `progress`: 0-100%
+    - `progress`: 0-100%
 - `priority`: 1 - 4 (low, medium, high, critical)
-- `duration`: calendar time from start to finish
-- `effort_estimate`: estimated effort to complete (days)
-- `effort_actual`: actual effort expended (days)
 - `comment`: notes
 
-#### Custom fields
+**Custom**
 - Any additional key-value pairs you need, `key: value`
 
 
