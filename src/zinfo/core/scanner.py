@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 import os
 
 from .models import ResourceMetadata, ScanResult
+from .id_generator import DirIDGenerator
 
 if TYPE_CHECKING:
     from .cache import Cache
@@ -128,13 +129,14 @@ class ZinfoScanner(BaseScanner):
     ):
         super().__init__(base_dir, cache, recursive)
         self.max_depth = max_depth
+        self.id_generator = DirIDGenerator()
 
     def can_handle_file(self, path: Path) -> bool:
         """Check if file is zinfo.txt."""
         return path.name.lower() == "zinfo.txt"
 
-    def extract_metadata(self, path: Path) -> Optional[ResourceMetadata]:
-        """Parse zinfo.txt into ResourceMetadata."""
+    def _parse_zinfo_file(self, path: Path) -> dict:
+        """Parse zinfo.txt file into key-value dictionary."""
         try:
             with open(path, "r", encoding="utf-8") as f:
                 lines = f.readlines()[:50]  # First 50 lines as spec
@@ -144,34 +146,70 @@ class ZinfoScanner(BaseScanner):
                 if ":" in line:
                     key, value = line.split(":", 1)
                     meta[key.strip().lower()] = value.strip()
+            return meta
+        except Exception as e:
+            logger.error(f"Failed to parse {path}: {e}")
+            return {}
 
-            if not meta:  # No valid keys
+    def _validate_required_fields(self, fields: dict, path: Path) -> bool:
+        """Validate presence of required fields."""
+        required = ["title", "shortname", "summary", "client", "team", "contact_email", "location"]
+        missing = [f for f in required if f not in fields or not fields[f]]
+        if missing:
+            logger.warning(f"Skipping {path}: missing required fields: {', '.join(missing)}")
+            return False
+        return True
+
+    def _extract_required_fields(self, fields: dict) -> dict:
+        """Extract required fields from parsed fields."""
+        required_keys = ["title", "shortname", "summary", "client", "team", "contact_email", "location"]
+        return {k: fields[k] for k in required_keys}
+
+    def _extract_optional_fields(self, fields: dict) -> dict:
+        """Extract optional fields from parsed fields."""
+        # For now, no specific optional fields defined, return empty
+        return {}
+
+    def _extract_custom_fields(self, fields: dict) -> dict:
+        """Extract custom fields from parsed fields."""
+        required_keys = {"title", "shortname", "summary", "client", "team", "contact_email", "location"}
+        return {k: v for k, v in fields.items() if k not in required_keys}
+
+    def extract_metadata(self, path: Path) -> Optional[ResourceMetadata]:
+        """Parse zinfo.txt into ResourceMetadata with validation and categorization."""
+        try:
+            fields = self._parse_zinfo_file(path)
+
+            if not fields:  # No valid keys
                 return None
-
-            rel_path = path.relative_to(self.base_dir)
-            title = meta.get("title", path.parent.name)
-            contact = meta.get("contact", meta.get("authors", ""))
-            extra = meta.copy()
-
-            last_modified = datetime.fromtimestamp(path.stat().st_mtime)
-
-            resource = ResourceMetadata(
-                id=str(rel_path),
-                title=title,
-                link=str(path.parent),
-                contact=contact,
-                doc_dir=path.parent / "Doc",
-                last_modified=last_modified,
-                last_indexed=datetime.now(),
-                metadata_type="zinfo_project",
-                extra=extra,
-            )
 
             # Check for ignore
-            if meta.get("do_not_index", "").lower() == "true":
+            if fields.get("do_not_index", "").lower() == "true":
                 return None
 
-            return resource
+            # Validate required fields
+            if not self._validate_required_fields(fields, path):
+                return None
+
+            # Generate dir_id
+            dir_id = self.id_generator.generate(str(path.parent))
+
+            # Categorize fields
+            required = self._extract_required_fields(fields)
+            optional = self._extract_optional_fields(fields)
+            custom = self._extract_custom_fields(fields)
+
+            # Build ResourceMetadata
+            rel_path = path.relative_to(self.base_dir)
+            return ResourceMetadata(
+                dir_id=dir_id,
+                dir_path=str(path.parent.resolve()),
+                **required,
+                last_modified=datetime.fromtimestamp(path.stat().st_mtime),
+                last_indexed=datetime.now(),
+                optional_fields=optional or None,
+                custom_fields=custom or None,
+            )
 
         except Exception as e:
             logger.error(f"Failed to extract metadata from {path}: {e}")

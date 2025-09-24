@@ -144,7 +144,7 @@ status: Complete
 
 #### Metadata Fields
 
-**System**
+**System** (in db, not in zinfo.txt)
 - `dir_id`: unique id computed at scan time from project folder, hashed into 6 or more characters. Not editable.
 - `dir_path`: fully resolved path to zinfo file's `location`
 
