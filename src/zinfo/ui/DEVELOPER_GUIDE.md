@@ -1,5 +1,7 @@
 # zInfo UI Framework Integration Guide
 
+**Note: This guide is for future native GUI framework implementations, which are not currently planned. The primary user interface for zInfo is now the FastHTML-based web UI. This document remains for reference if native GUI support is added in the future.**
+
 This guide provides comprehensive instructions for developers who want to integrate new UI frameworks into the zInfo project. The zInfo GUI architecture is designed to be framework-agnostic, allowing easy swapping between different UI toolkits.
 
 ## Architecture Overview
