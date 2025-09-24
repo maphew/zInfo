@@ -359,18 +359,18 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
                 Input(type="checkbox", name="search_type", value="true", checked=True, id="search_type", style="display: none;"),
                 Input(type="checkbox", name="search_dir_id", value="true", checked=True, id="search_dir_id", style="display: none;"),
                 # Clickable labels that control the hidden checkboxes
-                # Note: Custom inline styles are used here to provide visual feedback for the clickable search field toggles.
+                # Note: Custom CSS classes are used here to provide visual feedback for the clickable search field toggles.
                 # This departs from idiomatic FastHTML's "exclusive use of Pico CSS without custom styling" because
                 # the UX requires dynamic visual state changes (bold/color/background) that Pico doesn't provide out-of-the-box.
-                # The JavaScript below handles the toggling of these styles and checkbox states.
+                # The JavaScript below handles the toggling of these classes and checkbox states.
                 Div(
-                    Label("Title", for_="search_title", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
-                    Label("Shortname", for_="search_shortname", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
-                    Label("Client", for_="search_client", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
-                    Label("Team", for_="search_team", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
-                    Label("Author", for_="search_author", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
-                    Label("Type", for_="search_type", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
-                    Label("Dir ID", for_="search_dir_id", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
+                    Label("Title", for_="search_title", cls="bold primary rounded px-2 py-1 search-field-enabled"),
+                    Label("Shortname", for_="search_shortname", cls="bold primary rounded px-2 py-1 search-field-enabled"),
+                    Label("Client", for_="search_client", cls="bold primary rounded px-2 py-1 search-field-enabled"),
+                    Label("Team", for_="search_team", cls="bold primary rounded px-2 py-1 search-field-enabled"),
+                    Label("Author", for_="search_author", cls="bold primary rounded px-2 py-1 search-field-enabled"),
+                    Label("Type", for_="search_type", cls="bold primary rounded px-2 py-1 search-field-enabled"),
+                    Label("Dir ID", for_="search_dir_id", cls="bold primary rounded px-2 py-1 search-field-enabled"),
                     style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;"
                 ),
                 style="display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0;"
@@ -416,6 +416,14 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         Grid(search_form, scan_form),
         Card(results_div),
         Card(Div(id="detail")),
+        Style("""
+            .search-field-enabled {
+                background-color: rgba(0, 122, 204, 0.1);
+            }
+            .search-field-disabled {
+                background-color: transparent;
+            }
+        """),
         # JavaScript for clickable field selection labels
         Script("""
             function toggleFieldLabel(label, checkboxId) {
@@ -424,15 +432,13 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
 
                 if (isChecked) {
                     // Disable field - muted styling
-                    label.style.fontWeight = 'normal';
-                    label.style.color = '#666';
-                    label.style.backgroundColor = 'transparent';
+                    label.classList.remove('bold', 'primary', 'search-field-enabled');
+                    label.classList.add('secondary', 'search-field-disabled');
                     checkbox.checked = false;
                 } else {
                     // Enable field - bold/bright styling
-                    label.style.fontWeight = 'bold';
-                    label.style.color = '#007acc';
-                    label.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
+                    label.classList.remove('secondary', 'search-field-disabled');
+                    label.classList.add('bold', 'primary', 'search-field-enabled');
                     checkbox.checked = true;
                 }
             }
@@ -665,15 +671,15 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
         index_cache.clear()
         search_cache.clear()
 
-        # Fetch updated resource list for display
-        resources, _ = cache.get_all_resources()
+        # Fetch updated resource list for display (first page only for performance)
+        resources, total_count = cache.get_all_resources(limit=DEFAULT_LIMIT, offset=0)
     except Exception as e:
         logging.error(f"Error during scan: {e}", exc_info=True)
         status_div = Div("Scan failed due to an error.", id="scan-status")
         return status_div, Toast("Scan failed", typ="error")
 
-    # Build updated results table
-    content = build_resource_table(resources, no_resources_msg="No cached resources found.")
+    # Build updated results table with pagination
+    content = build_resource_table(resources, total_count, page=1, limit=DEFAULT_LIMIT, base_url="/", extra_params="", no_resources_msg="No cached resources found.")
 
     # Generate appropriate messages based on scan outcome
     if result.errors:

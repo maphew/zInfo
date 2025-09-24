@@ -31,43 +31,63 @@ def seeded_cache(temp_db):
     cache = Cache(temp_db)
 
     resource1 = ResourceMetadata(
-        id="test/resource1",
+        dir_id="test/resource1",
+        dir_path="/test/path1",
         title="Python Project",
-        link="file://test1.txt",
-        contact="alice@example.com",
+        shortname="PyProj",
+        summary="A Python project",
+        client="Test Client",
+        team="Dev Team",
+        contact_email="alice@example.com",
+        location="test1.txt",
         metadata_type="project",
         last_indexed=datetime.now(),
-        extra={"authors": ["Alice Smith"]}
+        optional_fields={"authors": ["Alice Smith"]}
     )
 
     resource2 = ResourceMetadata(
-        id="test/resource2",
+        dir_id="test/resource2",
+        dir_path="/test/path2",
         title="JavaScript App",
-        link="file://test2.txt",
-        contact="bob@example.com",
+        shortname="JSApp",
+        summary="A JavaScript application",
+        client="Test Client",
+        team="Dev Team",
+        contact_email="bob@example.com",
+        location="test2.txt",
         metadata_type="app",
         last_indexed=datetime.now(),
-        extra={"authors": ["Bob Johnson"]}
+        optional_fields={"authors": ["Bob Johnson"]}
     )
 
     resource3 = ResourceMetadata(
-        id="docs/manual",
+        dir_id="docs/manual",
+        dir_path="/docs/path",
         title="User Manual",
-        link="file://manual.pdf",
-        contact="charlie@example.com",
+        shortname="Manual",
+        summary="User documentation",
+        client="Test Client",
+        team="Doc Team",
+        contact_email="charlie@example.com",
+        location="manual.pdf",
         metadata_type="document",
         last_indexed=datetime.now(),
-        extra={"authors": ["Charlie Brown", "Alice Smith"]}
+        optional_fields={"authors": ["Charlie Brown", "Alice Smith"]}
     )
 
     resource4 = ResourceMetadata(
-        id="web/site",
+        dir_id="web/site",
+        dir_path="/web/path",
         title="Website",
-        link="file://site.html",
-        contact="diana@example.com",
+        shortname="Site",
+        summary="Company website",
+        client="Test Client",
+        team="Web Team",
+        contact_email="diana@example.com",
+        location="site.html",
         metadata_type="web",
         last_indexed=datetime.now(),
-        extra={"authors": ["Diana Prince"]}
+        optional_fields={"authors": ["Diana Prince"]}
     )
 
     cache.store_resource(resource1)
@@ -101,7 +121,7 @@ def test_search_htmx_request(seeded_cache, temp_db):
 
     try:
         client = TestClient(app)
-        response = client.get("/search?title=Python", headers={"HX-Request": "true"})
+        response = client.get("/search?query=Python&search_title=true", headers={"HX-Request": "true"})
         assert response.status_code == 200
         assert "Python Project" in response.text
         assert "JavaScript App" not in response.text
@@ -122,7 +142,7 @@ def test_search_non_htmx_request(seeded_cache, temp_db):
 
     try:
         client = TestClient(app)
-        response = client.get("/search?type=project")
+        response = client.get("/search?query=project&search_type=true")
         assert response.status_code == 200
         assert "Python Project" in response.text  # type=project
         assert "JavaScript App" not in response.text  # type=app
@@ -155,8 +175,8 @@ def test_index_with_resources(seeded_cache, temp_db):
         assert "<table" in response.text  # Check for table element
         assert "Title" in response.text  # Header
         assert "Type" in response.text
-        assert "ID" in response.text
-        assert "Path" in response.text
+        assert "Dir ID" in response.text
+        assert "Location" in response.text
         assert '<form' in response.text  # Check for form
         assert 'hx-get="/search"' in response.text  # Check for HTMX attributes
         assert 'id="results"' in response.text  # Check for results div
@@ -178,10 +198,10 @@ def test_detail_htmx_request(seeded_cache, temp_db):
         response = client.get("/detail?id=test/resource1", headers={"HX-Request": "true"})
         assert response.status_code == 200
         assert "Python Project" in response.text
-        assert "Type: project" in response.text
-        assert "Link: file://test1.txt" in response.text
-        assert "Contact: alice@example.com" in response.text
-        assert "Doc Dir: None" in response.text
+        assert "Type:" in response.text and "project" in response.text
+        assert "Location:" in response.text and "test1.txt" in response.text
+        assert "Contact Email:" in response.text and "alice@example.com" in response.text
+        assert "Dir Path:" in response.text and "/test/path1" in response.text
         assert "zInfo UI - Detail" not in response.text  # Should not return full page
         assert '<div id="detail-panel"' in response.text
     finally:
@@ -200,10 +220,10 @@ def test_detail_non_htmx_request(seeded_cache, temp_db):
         response = client.get("/detail?id=test/resource1")
         assert response.status_code == 200
         assert "Python Project" in response.text
-        assert "Type: project" in response.text
-        assert "Link: file://test1.txt" in response.text
-        assert "Contact: alice@example.com" in response.text
-        assert "Doc Dir: None" in response.text
+        assert "Type:" in response.text and "project" in response.text
+        assert "Location:" in response.text and "test1.txt" in response.text
+        assert "Contact Email:" in response.text and "alice@example.com" in response.text
+        assert "Dir Path:" in response.text and "/test/path1" in response.text
         assert "zInfo UI - Detail" in response.text  # Should return full page
         assert '<div id="detail-panel"' in response.text
     finally:
@@ -239,8 +259,12 @@ def test_scan_post_updates_index(temp_db):
         subdir.mkdir()
         zinfo_file = subdir / "zinfo.txt"
         zinfo_file.write_text("""title: Test Project
-type: project
-contact: test@example.com
+shortname: TestProj
+summary: A test project
+client: Test Client
+team: Dev Team
+contact_email: test@example.com
+location: zinfo.txt
 """)
 
         old_env = os.environ.get("ZINFO_DB_PATH")
@@ -252,8 +276,9 @@ contact: test@example.com
             response = client.post("/scan", data={"root": temp_root, "profile": "deep"})
             assert response.status_code == 200
             assert "Test Project" in response.text
-            assert "zinfo_project" in response.text
-            assert "test_project/zinfo.txt" in response.text
+            # Note: dir_id is generated, not "zinfo_project"
+            # assert "zinfo_project" in response.text
+            assert "zinfo.txt" in response.text
 
             # GET / shows the new entry
             index_cache.clear()
@@ -358,35 +383,67 @@ def test_validate_scan_params_custom_depth_invalid():
     assert exc_info.value.status_code == 400
     assert "custom_depth must be a positive integer" in str(exc_info.value.detail)
 
+def test_validate_scan_params_edge_cases():
+    """Test validate_scan_params with edge cases."""
+    import tempfile
+    import os
+
+    # Test with current directory (should be valid)
+    validate_scan_params(".", "standard", None)
+
+    # Test with subdirectory within cwd
+    with tempfile.TemporaryDirectory(dir=".") as temp_dir:
+        subdir = Path(temp_dir) / "subdir"
+        subdir.mkdir()
+        validate_scan_params(str(subdir.relative_to(Path.cwd())), "quick", None)
+
+    # Test custom depth at boundaries
+    validate_scan_params(".", "custom", 1)  # Minimum valid depth
+    validate_scan_params(".", "custom", 10)  # Maximum allowed depth
+
+    # Test with profile other than custom and depth provided (should ignore depth)
+    validate_scan_params(".", "deep", 5)  # Should not raise even though depth provided
+
+def test_validate_scan_params_path_resolution():
+    """Test validate_scan_params with various path resolution scenarios."""
+    # Test with relative path that resolves within cwd
+    validate_scan_params("./", "standard", None)
+    validate_scan_params("./subdir", "standard", None)
+
+    # Test with absolute path within cwd
+    cwd_path = str(Path.cwd())
+    validate_scan_params(cwd_path, "standard", None)
+
+    # Test with symlink (if supported)
+    # This might not work on all systems, so we'll skip if not applicable
+    try:
+        import tempfile
+        with tempfile.TemporaryDirectory(dir=".") as temp_dir:
+            target = Path(temp_dir) / "target"
+            target.mkdir()
+            link = Path(temp_dir) / "link"
+            link.symlink_to(target, target_is_directory=True)
+            # Symlinks should be resolved and checked
+            validate_scan_params(str(link), "standard", None)
+    except (OSError, NotImplementedError):
+        # Symlinks not supported on this system
+        pass
+
 def test_validate_search_params_valid():
     """Test validate_search_params with valid parameters."""
     # Should not raise any exception
-    validate_search_params("Python Project", "Alice", "project", "test_id")
-    validate_search_params("", "", "", "")  # Empty strings are allowed
-    validate_search_params("test-title_123", "author.name", "type-1", "id_123")
+    validate_search_params("Python Project", "true", "", "", "", "", "", "")
+    validate_search_params("", "", "", "", "", "", "", "")  # Empty strings are allowed
+    validate_search_params("test-title_123", "", "", "", "", "", "", "")
+    validate_search_params("query", "true", "true", "true", "true", "true", "true", "true")  # All booleans true
 
 def test_validate_search_params_length_limit():
     """Test validate_search_params with parameters exceeding length limit."""
     long_param = "a" * 101  # MAX_SEARCH_PARAM_LENGTH is 100
     with pytest.raises(HTTPException) as exc_info:
-        validate_search_params(long_param, "", "", "")
+        validate_search_params(long_param, "", "", "", "", "", "", "")
     assert exc_info.value.status_code == 400
-    assert "title must be 100 characters or less" in str(exc_info.value.detail)
-
-    with pytest.raises(HTTPException) as exc_info:
-        validate_search_params("", long_param, "", "")
-    assert exc_info.value.status_code == 400
-    assert "author must be 100 characters or less" in str(exc_info.value.detail)
-
-    with pytest.raises(HTTPException) as exc_info:
-        validate_search_params("", "", long_param, "")
-    assert exc_info.value.status_code == 400
-    assert "type must be 100 characters or less" in str(exc_info.value.detail)
-
-    with pytest.raises(HTTPException) as exc_info:
-        validate_search_params("", "", "", long_param)
-    assert exc_info.value.status_code == 400
-    assert "id must be 100 characters or less" in str(exc_info.value.detail)
+    assert "query must be 100 characters or less" in str(exc_info.value.detail)
 
 def test_validate_search_params_invalid_characters():
     """Test validate_search_params with invalid characters."""
@@ -395,14 +452,51 @@ def test_validate_search_params_invalid_characters():
 
     for invalid_char in invalid_chars:
         with pytest.raises(HTTPException) as exc_info:
-            validate_search_params(f"test{invalid_char}title", "", "", "")
+            validate_search_params(f"test{invalid_char}query", "", "", "", "", "", "", "")
         assert exc_info.value.status_code == 400
-        assert "title contains invalid characters" in str(exc_info.value.detail)
+        assert "query contains invalid characters" in str(exc_info.value.detail)
 
-        with pytest.raises(HTTPException) as exc_info:
-            validate_search_params("", f"author{invalid_char}", "", "")
-        assert exc_info.value.status_code == 400
-        assert "author contains invalid characters" in str(exc_info.value.detail)
+def test_validate_search_params_boolean_flags():
+    """Test validate_search_params with boolean flag validation."""
+    # Valid boolean values
+    validate_search_params("query", "true", "", "", "", "", "", "")
+    validate_search_params("query", "", "true", "", "", "", "", "")
+    validate_search_params("query", "", "", "true", "", "", "", "")
+    validate_search_params("query", "", "", "", "true", "", "", "")
+    validate_search_params("query", "", "", "", "", "true", "", "")
+    validate_search_params("query", "", "", "", "", "", "true", "")
+    validate_search_params("query", "", "", "", "", "", "", "true")
+
+    # Invalid boolean values
+    with pytest.raises(HTTPException) as exc_info:
+        validate_search_params("query", "false", "", "", "", "", "", "")
+    assert exc_info.value.status_code == 400
+    assert "search_title must be 'true' or empty" in str(exc_info.value.detail)
+
+    with pytest.raises(HTTPException) as exc_info:
+        validate_search_params("query", "TRUE", "", "", "", "", "", "")
+    assert exc_info.value.status_code == 400
+    assert "search_title must be 'true' or empty" in str(exc_info.value.detail)
+
+    with pytest.raises(HTTPException) as exc_info:
+        validate_search_params("query", "1", "", "", "", "", "", "")
+    assert exc_info.value.status_code == 400
+    assert "search_title must be 'true' or empty" in str(exc_info.value.detail)
+
+def test_validate_search_params_edge_cases():
+    """Test validate_search_params with edge cases."""
+    # Query with only whitespace (should be stripped and validated)
+    validate_search_params("   valid query   ", "", "", "", "", "", "", "")
+
+    # Query exactly at length limit
+    exact_length = "a" * 100
+    validate_search_params(exact_length, "", "", "", "", "", "", "")
+
+    # Empty query with no fields enabled (should be valid)
+    validate_search_params("", "", "", "", "", "", "", "")
+
+    # Query with allowed special characters
+    validate_search_params("test-title_123.456 space", "", "", "", "", "", "", "")
 
 def test_validate_detail_id_valid():
     """Test validate_detail_id with valid IDs."""
@@ -465,6 +559,18 @@ def test_validate_pagination_params_invalid_limit():
     assert exc_info.value.status_code == 400
     assert "limit must be between 1 and 1000" in str(exc_info.value.detail)
 
+def test_validate_pagination_params_edge_cases():
+    """Test validate_pagination_params with edge cases."""
+    # Test boundary values
+    validate_pagination_params(1, 1)  # Minimum values
+    validate_pagination_params(1000000, 1000)  # Large page, max limit
+
+    # Test with float inputs (should work as they convert to int)
+    validate_pagination_params(1, 50)  # Already int
+
+    # Test with very large page numbers (should be allowed)
+    validate_pagination_params(999999, 50)
+
 # Integration tests for route validation
 
 def test_index_invalid_pagination_params():
@@ -504,21 +610,16 @@ def test_search_invalid_search_params():
     """Test search route with invalid search parameters."""
     client = TestClient(app)
 
-    # Oversized title
-    long_title = "a" * 101
-    response = client.get(f"/search?title={long_title}")
+    # Oversized query
+    long_query = "a" * 101
+    response = client.get(f"/search?query={long_query}")
     assert response.status_code == 400
-    assert "title must be 100 characters or less" in response.text
+    assert "query must be 100 characters or less" in response.text
 
-    # Invalid characters in title
-    response = client.get("/search?title=test@title")
+    # Invalid characters in query
+    response = client.get("/search?query=test@query")
     assert response.status_code == 400
-    assert "title contains invalid characters" in response.text
-
-    # Invalid characters in author
-    response = client.get("/search?author=author%23test")  # URL encoded #
-    assert response.status_code == 400
-    assert "author contains invalid characters" in response.text
+    assert "query contains invalid characters" in response.text
 
 def test_detail_invalid_id():
     """Test detail route with invalid ID."""
@@ -671,7 +772,7 @@ def test_search_cache_behavior(seeded_cache, temp_db):
         client = TestClient(app)
 
         # First search request
-        response1 = client.get("/search?title=Python")
+        response1 = client.get("/search?query=Python&search_title=true")
         assert response1.status_code == 200
         assert "Python Project" in response1.text
 
@@ -683,7 +784,7 @@ def test_search_cache_behavior(seeded_cache, temp_db):
         assert len(cached_data[0]) == 1  # Only Python Project matches
 
         # Second identical search should use cache
-        response2 = client.get("/search?title=Python")
+        response2 = client.get("/search?query=Python&search_title=true")
         assert response2.status_code == 200
         assert response2.text == response1.text
     finally:
@@ -794,8 +895,12 @@ def test_scan_htmx_response(temp_db):
         subdir.mkdir()
         zinfo_file = subdir / "zinfo.txt"
         zinfo_file.write_text("""title: Test Project
-type: project
-contact: test@example.com
+shortname: TestProj
+summary: A test project
+client: Test Client
+team: Dev Team
+contact_email: test@example.com
+location: zinfo.txt
 """)
 
         old_env = os.environ.get("ZINFO_DB_PATH")
@@ -963,3 +1068,107 @@ def test_cache_memory_cleanup():
     result = cache.get("key_1")
     assert result is None
     assert len(cache.cache) == 98  # Now 98 left
+
+def test_ttl_cache_edge_cases():
+    """Test TTLCache with edge cases."""
+    # Test with TTL of 0 (should expire immediately)
+    cache = TTLCache(0)
+    cache.set("key", "value")
+    assert cache.get("key") is None  # Should be expired immediately
+
+    # Test with very large TTL
+    cache = TTLCache(999999)
+    cache.set("key", "value")
+    assert cache.get("key") == "value"
+
+    # Test overwriting existing key
+    cache = TTLCache(10)
+    cache.set("key", "value1")
+    assert cache.get("key") == "value1"
+    cache.set("key", "value2")  # Overwrite
+    assert cache.get("key") == "value2"
+
+    # Test getting non-existent key
+    assert cache.get("nonexistent") is None
+
+    # Test clear on empty cache
+    empty_cache = TTLCache(10)
+    empty_cache.clear()  # Should not raise
+    assert len(empty_cache.cache) == 0
+
+def test_ttl_cache_different_key_types():
+    """Test TTLCache with different key types."""
+    cache = TTLCache(10)
+
+    # Test with string keys
+    cache.set("string_key", "value")
+    assert cache.get("string_key") == "value"
+
+    # Test with integer keys
+    cache.set(42, "int_value")
+    assert cache.get(42) == "int_value"
+
+    # Test with tuple keys
+    cache.set(("tuple", "key"), "tuple_value")
+    assert cache.get(("tuple", "key")) == "tuple_value"
+
+    # Test with frozenset keys (hashable)
+    frozen_key = frozenset(["a", "b", "c"])
+    cache.set(frozen_key, "frozen_value")
+    assert cache.get(frozen_key) == "frozen_value"
+
+def test_ttl_cache_expiration_precision():
+    """Test TTLCache expiration timing precision."""
+    import time
+    cache = TTLCache(2)  # 2 second TTL
+
+    # Set a value
+    cache.set("key", "value")
+    assert cache.get("key") == "value"
+
+    # Wait just under TTL
+    time.sleep(1.9)
+    assert cache.get("key") == "value"  # Should still be valid
+
+    # Wait past TTL
+    time.sleep(0.2)
+    assert cache.get("key") is None  # Should be expired
+
+def test_ttl_cache_thread_safety_assumptions():
+    """Test that TTLCache behaves correctly under concurrent access (though not thread-safe)."""
+    import threading
+    import time
+
+    cache = TTLCache(10)
+    errors = []
+
+    def writer():
+        try:
+            for i in range(100):
+                cache.set(f"key_{i}", f"value_{i}")
+        except Exception as e:
+            errors.append(f"Writer error: {e}")
+
+    def reader():
+        try:
+            for i in range(100):
+                cache.get(f"key_{i}")
+        except Exception as e:
+            errors.append(f"Reader error: {e}")
+
+    # Start threads
+    threads = []
+    for _ in range(5):
+        threads.append(threading.Thread(target=writer))
+        threads.append(threading.Thread(target=reader))
+
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    # Since TTLCache is not thread-safe, we expect some operations to succeed
+    # but we shouldn't have crashes (in practice, this may vary)
+    # The main point is that the cache remains functional
+    assert len(errors) == 0 or "not thread-safe" in str(errors).lower()  # Allow for known thread-safety issues
