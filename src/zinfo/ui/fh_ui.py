@@ -8,7 +8,6 @@ import logging
 import time
 from typing import Any, Tuple, List, Optional
 import click
-import uvicorn
 
 # Constants
 # Scan profiles define preset depth levels for directory scanning
@@ -360,6 +359,10 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
                 Input(type="checkbox", name="search_type", value="true", checked=True, id="search_type", style="display: none;"),
                 Input(type="checkbox", name="search_dir_id", value="true", checked=True, id="search_dir_id", style="display: none;"),
                 # Clickable labels that control the hidden checkboxes
+                # Note: Custom inline styles are used here to provide visual feedback for the clickable search field toggles.
+                # This departs from idiomatic FastHTML's "exclusive use of Pico CSS without custom styling" because
+                # the UX requires dynamic visual state changes (bold/color/background) that Pico doesn't provide out-of-the-box.
+                # The JavaScript below handles the toggling of these styles and checkbox states.
                 Div(
                     Label("Title", for_="search_title", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
                     Label("Shortname", for_="search_shortname", style="font-weight: bold; color: #007acc; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.25rem; background-color: rgba(0, 122, 204, 0.1);"),
@@ -714,7 +717,7 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
 
 def run_server(host=DEFAULT_HOST, port=DEFAULT_PORT, reload=True):
     """Start the zInfo FastHTML web UI server."""
-    uvicorn.run('zinfo.ui.fh_ui:app', host=host, port=port, reload=reload)
+    serve('zinfo.ui.fh_ui', app, host=host, port=port, reload=reload)
 
 @click.command()
 @click.option("--host", default=DEFAULT_HOST, help="Host to bind to")
