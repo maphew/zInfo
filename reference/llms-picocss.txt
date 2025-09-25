@@ -1,0 +1,1505 @@
+================
+CODE SNIPPETS
+================
+TITLE: Install Pico CSS with Composer
+DESCRIPTION: This command illustrates how to install the Pico CSS library using Composer, a dependency manager for PHP.
+
+SOURCE: https://picocss.com/docs/v1
+
+LANGUAGE: php
+CODE:
+```
+composer require picocss/pico
+```
+
+--------------------------------
+
+TITLE: Install Pico CSS with NPM
+DESCRIPTION: This command shows how to install the Pico CSS library using the Node Package Manager (NPM).
+
+SOURCE: https://picocss.com/docs/v1
+
+LANGUAGE: bash
+CODE:
+```
+npm install @picocss/pico
+```
+
+--------------------------------
+
+TITLE: Install Pico.css with Composer
+DESCRIPTION: This command shows how to install the Pico.css package using Composer, suitable for PHP projects and server-side asset management.
+
+SOURCE: https://picocss.com/docs/index
+
+LANGUAGE: Shell
+CODE:
+```
+composer require picocss/pico
+```
+
+--------------------------------
+
+TITLE: Starter HTML Template with Pico.css
+DESCRIPTION: This is a basic HTML5 template that includes Pico.css via a local stylesheet link and sets up essential meta tags for a responsive and accessible page.
+
+SOURCE: https://picocss.com/docs/index
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Install Pico.css with NPM or Yarn
+DESCRIPTION: These commands show how to install the Pico.css package using either NPM or Yarn, allowing for integration into modern JavaScript build workflows.
+
+SOURCE: https://picocss.com/docs/index
+
+LANGUAGE: Shell
+CODE:
+```
+npm install @picocss/pico
+```
+
+LANGUAGE: Shell
+CODE:
+```
+yarn add @picocss/pico
+```
+
+--------------------------------
+
+TITLE: Starter HTML Template with Pico CSS
+DESCRIPTION: This is a basic HTML5 template that includes Pico CSS via a manual link in the head section and sets up a simple container for content.
+
+SOURCE: https://picocss.com/docs/v1
+
+LANGUAGE: html
+CODE:
+```
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/pico.min.css">
+    <title>Hello, world!</title>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Hello, world!</h1>
+    </main>
+  </body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Link Pico.css Manually
+DESCRIPTION: This snippet shows how to link the Pico.css stylesheet directly into your HTML file's head section for a manual setup.
+
+SOURCE: https://picocss.com/docs/index
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="css/pico.min.css">
+```
+
+--------------------------------
+
+TITLE: Link Pico CSS Manually
+DESCRIPTION: This snippet shows how to link the Pico CSS stylesheet manually by downloading the framework and referencing the pico.min.css file in the HTML head.
+
+SOURCE: https://picocss.com/docs/v1
+
+LANGUAGE: html
+CODE:
+```
+<link rel="stylesheet" href="css/pico.min.css">
+```
+
+--------------------------------
+
+TITLE: Link Pico CSS via CDN
+DESCRIPTION: This snippet demonstrates how to include Pico CSS in your project using the jsDelivr CDN, providing a direct link to the pico.min.css file.
+
+SOURCE: https://picocss.com/docs/v1
+
+LANGUAGE: html
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+```
+
+--------------------------------
+
+TITLE: Link Pico.css via CDN
+DESCRIPTION: This snippet demonstrates how to include Pico.css using the jsDelivr CDN, providing a quick and easy way to use the framework without local downloads.
+
+SOURCE: https://picocss.com/docs/index
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+```
+
+--------------------------------
+
+TITLE: Import Pico.css in Sass
+DESCRIPTION: This example illustrates how to import Pico.css into your Sass files using the @use directive, enabling customization and integration with Sass projects.
+
+SOURCE: https://picocss.com/docs/index
+
+LANGUAGE: SCSS
+CODE:
+```
+@use "pico";
+```
+
+--------------------------------
+
+TITLE: Pico.css v2.1.1 CDN Link
+DESCRIPTION: This snippet shows how to include Pico.css version 2.1.1 in your HTML document using a CDN link. This is the quickest way to start using Pico.css without any local setup.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css" />
+```
+
+--------------------------------
+
+TITLE: Include Pico CSS via CDN
+DESCRIPTION: This snippet shows how to include a specific version and theme of Pico.css (Fuchsia) directly from a CDN. It's a quick way to start using the framework without local installation.
+
+SOURCE: https://picocss.com/docs/version-picker/fuchsia
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fuchsia.min.css">
+```
+
+--------------------------------
+
+TITLE: Include Pico.css via CDN
+DESCRIPTION: This snippet shows how to include a specific version and theme of Pico.css in your HTML file using a CDN link. It's a quick way to start using the framework without local installation.
+
+SOURCE: https://picocss.com/docs/version-picker/blue
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.blue.min.css">
+```
+
+--------------------------------
+
+TITLE: Include Pico.css via CDN
+DESCRIPTION: This snippet shows how to include a specific theme of Pico.css (e.g., indigo) in your HTML file using a CDN link. This is a quick way to start using the framework without local installation.
+
+SOURCE: https://picocss.com/docs/version-picker/indigo
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css">
+```
+
+--------------------------------
+
+TITLE: Pico CSS Card Example
+DESCRIPTION: Demonstrates a basic card component using Pico CSS. This example shows a simple article element styled as a card.
+
+SOURCE: https://picocss.com/docs/v1/cards
+
+LANGUAGE: HTML
+CODE:
+```
+<article>I'm a card!</article>
+```
+
+--------------------------------
+
+TITLE: Pico.css Starter HTML Template
+DESCRIPTION: This is a basic HTML template that includes the Pico.css framework with a cyan theme and sets up a simple page structure. It's a starting point for projects using Pico.css.
+
+SOURCE: https://picocss.com/docs/version-picker/cyan
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.cyan.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Include Pico.css via CDN
+DESCRIPTION: This snippet shows how to include the Pico.css library in your HTML file using a Content Delivery Network (CDN). This is a quick way to start using Pico.css without local installation.
+
+SOURCE: https://picocss.com/docs/version-picker
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+```
+
+--------------------------------
+
+TITLE: Pico.css Striped Table Example
+DESCRIPTION: This example shows how to apply a striped style to a table in Pico.css using the `.striped` class.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: HTML
+CODE:
+```
+<table class="striped">
+  <thead>
+    <tr>
+      <th>Header 1</th>
+      <th>Header 2</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Data 1</td>
+      <td>Data 2</td>
+    </tr>
+    <tr>
+      <td>Data 3</td>
+      <td>Data 4</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+--------------------------------
+
+TITLE: React Syntax Highlighter Example
+DESCRIPTION: Demonstrates the use of React Syntax Highlighter for rendering code snippets within a React application. This component enhances the readability of code examples.
+
+SOURCE: https://picocss.com/docs/built-with
+
+LANGUAGE: JavaScript
+CODE:
+```
+import React from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+function CodeBlock() {
+  const codeString = `function helloWorld() {
+  console.log('Hello, world!');
+}`;
+  return (
+    <SyntaxHighlighter language="javascript" style={dark}>
+      {codeString}
+    </SyntaxHighlighter>
+  );
+}
+
+export default CodeBlock;
+```
+
+--------------------------------
+
+TITLE: Pico.css Sass Customization Example
+DESCRIPTION: This example shows how to customize Pico.css using Sass. It demonstrates enabling or disabling modules using the @use directive, allowing for a tailored build of the framework.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: Sass
+CODE:
+```
+@use "@picocss/pico/scss/pico" with (
+  // Disable components
+  $accordion: false,
+  $card: false,
+  $dropdown: false,
+  $nav: false,
+  $progress: false,
+  $tooltip: false,
+
+  // Enable components
+  $button: true,
+  $form: true,
+  $grid: true,
+  $input: true,
+  $modal: true,
+  $table: true,
+  $typography: true,
+
+  // Customization variables
+  $primary: #007bff,
+  $border-radius: 0.25rem
+);
+
+// Compile Pico.css
+@include pico.css();
+```
+
+--------------------------------
+
+TITLE: Pico.css Starter HTML Template
+DESCRIPTION: This is a basic HTML5 template that includes the Pico.css framework (pumpkin theme) and sets up a simple page structure with a container and a heading. It's a starting point for projects using Pico.css.
+
+SOURCE: https://picocss.com/docs/version-picker/pumpkin
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.pumpkin.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Pico.css Grid Layout Example
+DESCRIPTION: Demonstrates a basic responsive grid layout using Pico.css. The `.grid` class enables auto-layout columns that collapse on smaller devices.
+
+SOURCE: https://picocss.com/docs/grid
+
+LANGUAGE: HTML
+CODE:
+```
+<div class="grid"><div>1</div><div>2</div><div>3</div><div>4</div></div>
+```
+
+--------------------------------
+
+TITLE: Include Pico.css via CDN (Purple Theme)
+DESCRIPTION: This snippet shows how to include the purple theme variant of Pico.css in your HTML file using a CDN link. This is a quick way to start using the framework without local installation.
+
+SOURCE: https://picocss.com/docs/version-picker/purple
+
+LANGUAGE: HTML
+CODE:
+```
+<linkrel="stylesheet"href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.purple.min.css">
+```
+
+--------------------------------
+
+TITLE: Starter HTML Template with Pico.css
+DESCRIPTION: This is a basic HTML5 template that includes Pico.css (zinc theme) and sets up a simple page structure with a container and a heading. It's a good starting point for projects using Pico.css.
+
+SOURCE: https://picocss.com/docs/version-picker/zinc
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.zinc.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Pico.css Grid Layout Example
+DESCRIPTION: This snippet demonstrates the grid system in Pico.css. It shows how to create responsive layouts using container and column classes, with columns collapsing on smaller devices.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: HTML
+CODE:
+```
+<div class="container">
+  <div class="grid">
+    <div>Column 1</div>
+    <div>Column 2</div>
+    <div>Column 3</div>
+  </div>
+</div>
+```
+
+--------------------------------
+
+TITLE: Pico.css Conditional Styling Example
+DESCRIPTION: This example shows how to use Pico.css's conditional styling feature. By wrapping elements in a `.pico` container, styles are restricted to that section, useful for mixed-style environments.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: HTML
+CODE:
+```
+<div class="pico">
+  <p>This text will be styled by Pico.</p>
+  <button>Pico Button</button>
+</div>
+
+<div>
+  <p>This text will not be styled by Pico.</p>
+  <button>Default Button</button>
+</div>
+```
+
+--------------------------------
+
+TITLE: Pico.css Modal Example 2 (Membership Confirmation)
+DESCRIPTION: This example showcases a modal for membership confirmation, featuring a title, details about the membership and price, and action buttons in the footer. It uses the `<dialog>` element and standard HTML structure.
+
+SOURCE: https://picocss.com/docs/modal
+
+LANGUAGE: HTML
+CODE:
+```
+<dialogopen><article><h2>Confirm Your Membership</h2><p>      Please review the membership details below:
+</p><ul><li>Membership: Individual</li><li>Price: $10</li></ul><footer><buttonclass="secondary"></button><button>Confirm</button></footer></article></dialog>
+```
+
+--------------------------------
+
+TITLE: Pico.css Class-less Version Usage
+DESCRIPTION: Provides examples of linking the Pico.css class-less versions for centered or fluid viewports in HTML.
+
+SOURCE: https://picocss.com/docs/classless
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="css/pico.classless.min.css">
+```
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="css/pico.fluid.classless.min.css">
+```
+
+LANGUAGE: HTML
+CODE:
+```
+<!-- Centered viewport -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+```
+
+LANGUAGE: HTML
+CODE:
+```
+<!-- Fluid viewport -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fluid.classless.min.css">
+```
+
+--------------------------------
+
+TITLE: Install Pico CSS Manually
+DESCRIPTION: Download Pico CSS and link the conditional version (`pico.conditional.min.css`) in your HTML's `<head>` section for selective styling.
+
+SOURCE: https://picocss.com/docs/conditional
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="css/pico.conditional.min.css">
+```
+
+--------------------------------
+
+TITLE: Install Pico CSS via CDN
+DESCRIPTION: Use the jsDelivr CDN to include the conditional version of Pico CSS (`pico.conditional.min.css`) in your project.
+
+SOURCE: https://picocss.com/docs/conditional
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
+```
+
+--------------------------------
+
+TITLE: Pico.css Range Input Example
+DESCRIPTION: Demonstrates how to create a basic slider control using the `<input type="range">` element within a label in Pico.css. Includes an example with a default value.
+
+SOURCE: https://picocss.com/docs/forms/range
+
+LANGUAGE: HTML
+CODE:
+```
+<label><input type="range"/></label><label><input type="range"value="40"/></label>
+```
+
+--------------------------------
+
+TITLE: Pico CSS - Grid Layout
+DESCRIPTION: Provides an example of using Pico CSS's grid system for creating responsive layouts. This enables efficient arrangement of content on different screen sizes.
+
+SOURCE: https://picocss.com/docs/built-with
+
+LANGUAGE: HTML
+CODE:
+```
+<div class="container">
+  <div class="grid">
+    <div>Column 1</div>
+    <div>Column 2</div>
+    <div>Column 3</div>
+  </div>
+</div>
+```
+
+--------------------------------
+
+TITLE: Modal with Footer Actions
+DESCRIPTION: Shows a modal example with a footer containing 'Cancel' and 'Confirm' buttons, demonstrating right alignment for footer content.
+
+SOURCE: https://picocss.com/docs/v1/modal
+
+LANGUAGE: HTML
+CODE:
+```
+<dialog open>
+  <article>
+    <h3>Confirm your action!</h3>
+    <p>
+      Mauris non nibh vel nisi sollicitudin malesuada. 
+      Donec ut sagittis erat. Praesent eu eros felis. 
+      Ut consectetur placerat pulvinar.
+    </p>
+    <footer>
+      <a href="#cancel" role="button" class="secondary">Cancel</a>
+      <a href="#confirm" role="button">Confirm</a>
+    </footer>
+  </article>
+</dialog>
+```
+
+--------------------------------
+
+TITLE: Pico.css Example with Custom Variables
+DESCRIPTION: An HTML snippet demonstrating the application of custom Pico.css variables to style a heading and a button. This example applies specific font families, weights, and spacing.
+
+SOURCE: https://picocss.com/docs/css-variables
+
+LANGUAGE: html
+CODE:
+```
+<h1>Music fest mania</h1>
+<p></p>
+<button>Let's rock out!</button>
+```
+
+--------------------------------
+
+TITLE: Pico CSS - RTL Support
+DESCRIPTION: Provides an example of implementing Right-to-Left (RTL) styling using Pico CSS. This is essential for supporting languages that read from right to left.
+
+SOURCE: https://picocss.com/docs/built-with
+
+LANGUAGE: HTML
+CODE:
+```
+<html dir="rtl">
+  <head>
+    <title>RTL Example</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@latest/css/pico.min.css" />
+  </head>
+  <body>
+    <p>This text is displayed in RTL.</p>
+  </body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Pico.css Overflow Auto Utility Example
+DESCRIPTION: This example demonstrates the `.overflow-auto` utility class in Pico.css, which can be applied to any element to enable horizontal scrolling.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: HTML
+CODE:
+```
+<figure class="overflow-auto">
+  <img src="path/to/your/image.jpg" alt="An image that might be wide">
+  <figcaption>Image Caption</figcaption>
+</figure>
+```
+
+--------------------------------
+
+TITLE: Responsive Form Layout with Grid
+DESCRIPTION: Demonstrates how to create a responsive form layout using Pico.css's `.grid` class. This example shows input elements nested within labels for a clean, accessible structure.
+
+SOURCE: https://picocss.com/docs/v1/forms
+
+LANGUAGE: html
+CODE:
+```
+<form>
+  <div class="grid">
+    <label for="firstname">
+      First name
+      <input type="text" id="firstname" name="firstname" placeholder="First name" required>
+    </label>
+    <label for="lastname">
+      Last name
+      <input type="text" id="lastname" name="lastname" placeholder="Last name" required>
+    </label>
+  </div>
+  <label for="email">Email address</label>
+  <input type="email" id="email" name="email" placeholder="Email address" required>
+  <small>We'll never share your email with anyone else.</small>
+  <button type="submit">Submit</button>
+</form>
+```
+
+--------------------------------
+
+TITLE: Pico.css CDN Link (Pumpkin Theme)
+DESCRIPTION: This snippet shows how to link the Pico.css framework with the 'pumpkin' theme directly from a CDN. It's a quick way to include the styles in your HTML project without local installation.
+
+SOURCE: https://picocss.com/docs/version-picker/pumpkin
+
+LANGUAGE: HTML
+CODE:
+```
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.pumpkin.min.css">
+```
+
+--------------------------------
+
+TITLE: Modal Toggle Button and Implementation
+DESCRIPTION: Provides an example of a button to trigger a modal and the corresponding modal structure with JavaScript interaction for toggling.
+
+SOURCE: https://picocss.com/docs/v1/modal
+
+LANGUAGE: HTML
+CODE:
+```
+<!-- Button to trigger the modal -->
+<button class="contrast" data-target="modal-example" onClick="toggleModal(event)">
+  Launch demo modal
+</button>
+
+<!-- Modal -->
+<dialog id="modal-example">
+  <article>
+    <a href="#close"
+      aria-label="Close"
+      class="close"
+      data-target="modal-example"
+      onClick="toggleModal(event)">
+    </a>
+    <h3>Confirm your action!</h3>
+    <p>
+      Cras sit amet maximus risus. 
+      Pellentesque sodales odio sit amet augue finibus pellentesque. 
+      Nullam finibus risus non semper euismod.
+    </p>
+    <footer>
+      <a href="#cancel"
+        role="button"
+        class="secondary"
+        data-target="modal-example"
+        onClick="toggleModal(event)">
+        Cancel
+      </a>
+      <a href="#confirm"
+        role="button"
+        data-target="modal-example"
+        onClick="toggleModal(event)">
+        Confirm
+      </a>
+    </footer>
+  </article>
+</dialog>
+```
+
+--------------------------------
+
+TITLE: Link Styled as Button with Pico.css
+DESCRIPTION: Shows how to style an anchor (`<a>`) tag to function and appear as a button using Pico.css. It includes examples for basic links and links with the `role="button"` attribute.
+
+SOURCE: https://picocss.com/docs/v1/buttons
+
+LANGUAGE: HTML
+CODE:
+```
+<a href="#" role="button">Link</a>
+<a href="#" role="button">Link</a>
+```
+
+--------------------------------
+
+TITLE: Pico.css CSS Variables for Customization
+DESCRIPTION: This example illustrates how to customize Pico.css using CSS variables. Over 130 CSS variables are available, allowing for easy modification of colors, spacing, typography, and more to create a unique design.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: CSS
+CODE:
+```
+:root {
+  --pico-primary: #007bff;
+  --pico-border-radius: 0.5rem;
+  --pico-font-size: 1rem;
+  --pico-spacing: 1rem;
+}
+
+body {
+  font-size: var(--pico-font-size);
+  padding: var(--pico-spacing);
+}
+
+.button {
+  background-color: var(--pico-primary);
+  border-radius: var(--pico-border-radius);
+}
+```
+
+--------------------------------
+
+TITLE: HTML Blockquote Styling with Pico.css
+DESCRIPTION: Demonstrates how to style blockquotes using Pico.css, including the use of the `<footer>` and `<cite>` elements for attribution. This example shows how to present quoted text with its source.
+
+SOURCE: https://picocss.com/docs/typography
+
+LANGUAGE: HTML
+CODE:
+```
+<blockquote>
+  <p>“Design is a funny word. Some people think design means how it looks. But of course, if you dig deeper, it's really how it works.”</p>
+  <footer><cite>— Steve Jobs</cite></footer>
+</blockquote>
+```
+
+--------------------------------
+
+TITLE: Pico CSS Card with Header and Footer
+DESCRIPTION: Illustrates a more complex card structure with header, body, and footer sections using Pico CSS. This example shows how to structure content within a card component.
+
+SOURCE: https://picocss.com/docs/v1/cards
+
+LANGUAGE: HTML
+CODE:
+```
+<article>
+  <header>Header</header>
+  Body
+  <footer>Footer</footer>
+</article>
+```
+
+--------------------------------
+
+TITLE: Pico.css Loading Indicator for Buttons
+DESCRIPTION: Provides examples of adding loading indicators to buttons using `aria-busy='true'` in Pico.css. It showcases different button styles (secondary, contrast, outline) with the loading state applied.
+
+SOURCE: https://picocss.com/docs/loading
+
+LANGUAGE: HTML
+CODE:
+```
+<button aria-busy="true" aria-label="Please wait…"></button>
+<button aria-busy="true" aria-label="Please wait…" class="secondary"></button>
+<button aria-busy="true" aria-label="Please wait…" class="contrast"></button>
+<button aria-busy="true" class="outline">Please wait…</button>
+<button aria-busy="true" class="outline secondary">Please wait…</button>
+<button aria-busy="true" class="outline contrast">Please wait…</button>
+```
+
+--------------------------------
+
+TITLE: Pico.css Group Component Example
+DESCRIPTION: This snippet demonstrates the 'group' component in Pico.css, which allows stacking form elements and buttons horizontally using `role="group"`.
+
+SOURCE: https://picocss.com/docs/v2
+
+LANGUAGE: HTML
+CODE:
+```
+<div role="group" class="input-group">
+  <input type="text" placeholder="Username">
+  <button type="button">Search</button>
+</div>
+```
+
+--------------------------------
+
+TITLE: Starter HTML Template with Pico.css
+DESCRIPTION: This is a basic HTML5 template that includes the Pico.css framework (red theme) and sets up a simple container for content.
+
+SOURCE: https://picocss.com/docs/version-picker/red
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.red.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Pico.css Starter HTML Template
+DESCRIPTION: A basic HTML5 template that includes the necessary meta tags, viewport settings, color scheme declaration, and the Pico.css pink theme stylesheet. It also includes a simple main container with a heading.
+
+SOURCE: https://picocss.com/docs/version-picker/pink
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.pink.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Custom Switch Element
+DESCRIPTION: Shows how to create a custom switch UI using a checkbox with the `role="switch"` attribute. Includes examples for both active and disabled switch states.
+
+SOURCE: https://picocss.com/docs/v1/forms
+
+LANGUAGE: html
+CODE:
+```
+<fieldset>
+  <label for="switch">
+    <input type="checkbox" id="switch" name="switch" role="switch">
+    Publish on my profile
+  </label>
+  <label for="switch_disabled">
+    <input type="checkbox" id="switch_disabled" name="switch_disabled" role="switch" disabled checked>
+    User must change password at next logon
+  </label>
+</fieldset>
+```
+
+--------------------------------
+
+TITLE: Dropdown as a Button with Pico.css
+DESCRIPTION: Demonstrates how to style a dropdown to appear as a button by adding the `role="button"` attribute to the `<summary>` element. This example shows variations with different classes (`secondary`, `contrast`) for distinct visual styles.
+
+SOURCE: https://picocss.com/docs/v1/dropdowns
+
+LANGUAGE: HTML
+CODE:
+```
+<details role="list">
+  <summary aria-haspopup="listbox" role="button">Dropdown as a button 1</summary>
+  <ul role="listbox">
+    <li><a>Action</a></li>
+    <li><a>Another action</a></li>
+    <li><a>Something else here</a></li>
+  </ul>
+</details>
+
+<details role="list">
+  <summary aria-haspopup="listbox" role="button" class="secondary">
+    Dropdown as a button 2
+  </summary>
+  <ul role="listbox">
+    <li><a>Action</a></li>
+    <li><a>Another action</a></li>
+    <li><a>Something else here</a></li>
+  </ul>
+</details>
+
+<details role="list">
+  <summary aria-haspopup="listbox" role="button" class="contrast">
+    Dropdown as a button 3
+  </summary>
+  <ul role="listbox">
+    <li><a>Action</a></li>
+    <li><a>Another action</a></li>
+    <li><a>Something else here</a></li>
+  </ul>
+</details>
+```
+
+--------------------------------
+
+TITLE: Pico.css Checkboxes - Horizontal Stacking
+DESCRIPTION: Shows how to horizontally stack checkboxes using Pico.css. This example includes language preferences and demonstrates styling for Hindi, Swahili, and Na'vi.
+
+SOURCE: https://picocss.com/docs/forms/checkboxes
+
+LANGUAGE: html
+CODE:
+```
+<fieldset><legend>Language preferences:</legend><inputtype="checkbox"id="hindi"name="hindi"checked/><labelhtmlFor="hindi">Hindi</label><inputtype="checkbox"id="swahili"name="swahili"/><labelhtmlFor="swahili">Swahili</label><inputtype="checkbox"id="navi"name="navi"disabled/><labelhtmlFor="navi"aria-disabled="true">Na'vi</label></fieldset>
+```
+
+--------------------------------
+
+TITLE: Pico.css Button Variant: Outline
+DESCRIPTION: Demonstrates the 'outline' variant for buttons using Pico.css. This example shows how to apply the `.outline` class, and combine it with other style classes like `.secondary` and `.contrast` for various button appearances.
+
+SOURCE: https://picocss.com/docs/v1/buttons
+
+LANGUAGE: HTML
+CODE:
+```
+<a href="#" role="button" class="outline">Primary</a>
+<a href="#" role="button" class="secondary outline">Secondary</a>
+<a href="#" role="button" class="contrast outline">Contrast</a>
+```
+
+--------------------------------
+
+TITLE: Apply Custom Classes for Styling Buttons
+DESCRIPTION: Shows an example of applying multiple custom classes ('button-red', 'margin-large', 'padding-medium') to a button to achieve specific styling and layout.
+
+SOURCE: https://picocss.com/docs/v1/we-love-classes
+
+LANGUAGE: HTML
+CODE:
+```
+<button class="button-red margin-large padding-medium">Action</button>
+```
+
+--------------------------------
+
+TITLE: Pico CSS Table Styles
+DESCRIPTION: Demonstrates the default styling for HTML tables using Pico CSS, including table head, body, and foot elements. This example shows a basic table structure without any specific classes applied.
+
+SOURCE: https://picocss.com/docs/v1/tables
+
+LANGUAGE: HTML
+CODE:
+```
+<table >
+  <thead >
+    <tr >
+      <th scope ="col">#</th >
+      <th scope ="col">Heading</th >
+      <th scope ="col">Heading</th >
+      <th scope ="col">Heading</th >
+      <th scope ="col">Heading</th >
+      <th scope ="col">Heading</th >
+    </tr >
+  </thead >
+  <tbody >
+    <tr >
+      <th scope ="row">1</th >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+    </tr >
+    <tr >
+      <th scope ="row">1</th >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+    </tr >
+    <tr >
+      <th scope ="row">1</th >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+      <td >Cell</td >
+    </tr >
+  </tbody >
+  <tfoot >
+    <tr >
+      <th scope ="col">#</th >
+      <td scope ="col">Total</td >
+      <td scope ="col">Total</td >
+      <td scope ="col">Total</td >
+      <td scope ="col">Total</td >
+      <td scope ="col">Total</td >
+    </tr >
+  </tfoot >
+</table >
+```
+
+--------------------------------
+
+TITLE: Example Form Styling
+DESCRIPTION: Demonstrates how a form element receives Pico CSS styling when placed inside a `.pico` container, contrasted with a form outside such a container.
+
+SOURCE: https://picocss.com/docs/conditional
+
+LANGUAGE: HTML
+CODE:
+```
+<form class="pico">
+  <input type="text" name="text" placeholder="Text" aria-label="Text">
+</form>
+```
+
+LANGUAGE: HTML
+CODE:
+```
+<form>
+  <input type="text" name="text" placeholder="Text" aria-label="Text">
+</form>
+```
+
+--------------------------------
+
+TITLE: Pico CSS Light Card Example
+DESCRIPTION: This HTML snippet shows how to render a card with the light color scheme using Pico CSS. The `data-theme="light"` attribute is applied to the article element to enforce the light theme.
+
+SOURCE: https://picocss.com/docs/color-schemes
+
+LANGUAGE: HTML
+CODE:
+```
+<articledata-theme="light"></article>
+```
+
+--------------------------------
+
+TITLE: Pico CSS - Modal Component
+DESCRIPTION: Provides an example of implementing a modal dialog using Pico CSS. Modals are used to display important information or prompt user interaction without navigating away from the current page.
+
+SOURCE: https://picocss.com/docs/built-with
+
+LANGUAGE: HTML
+CODE:
+```
+<dialog id="my-modal">
+  <h2>Modal Title</h2>
+  <p>This is the modal content.</p>
+  <button>Close</button>
+</dialog>
+<button onclick="document.getElementById('my-modal').showModal()">Open Modal</button>
+```
+
+--------------------------------
+
+TITLE: Pico.css Horizontal Radio Stacking
+DESCRIPTION: Provides an example of how to arrange radio inputs horizontally using Pico.css. This snippet includes labels associated with each radio button and demonstrates disabled states.
+
+SOURCE: https://picocss.com/docs/forms/radios
+
+LANGUAGE: HTML
+CODE:
+```
+<fieldset><legend>Second language:</legend><input type="radio" id="hindi" name="second-language" checked/><label htmlFor="hindi">Hindi</label><input type="radio" id="swahili" name="second-language"/><label htmlFor="swahili">Swahili</label><input type="radio" id="navi" name="second-language" disabled/><label htmlFor="navi" aria-disabled="true">Na'vi</label></fieldset>
+```
+
+--------------------------------
+
+TITLE: Multiple Dropdowns in Navigation with Pico.css
+DESCRIPTION: Provides an example of including multiple dropdowns within a navigation bar. This includes a standard dropdown and a dropdown styled as a button, showcasing different interactive elements within the same navigation context.
+
+SOURCE: https://picocss.com/docs/v1/dropdowns
+
+LANGUAGE: HTML
+CODE:
+```
+<nav>
+  <ul>
+    <li>
+      <details role="list">
+        <summary aria-haspopup="listbox">Dropdown</summary>
+        <ul role="listbox">
+          <li><a>Action</a></li>
+          <li><a>Another action</a></li>
+          <li><a>Something else here</a></li>
+        </ul>
+      </details>
+    </li>
+    <li>
+      <details role="list">
+        <summary aria-haspopup="listbox" role="button">Dropdown</summary>
+        <ul role="listbox">
+          <li><a>Action</a></li>
+          <li><a>Another action</a></li>
+          <li><a>Something else here</a></li>
+        </ul>
+      </details>
+    </li>
+  </ul>
+</nav>
+```
+
+--------------------------------
+
+TITLE: Pico.css Modal Example 1
+DESCRIPTION: This code snippet demonstrates the basic structure of a modal component using Pico.css, including a header with a close button and a body with event details. It utilizes the semantic `<dialog>` tag for accessibility.
+
+SOURCE: https://picocss.com/docs/modal
+
+LANGUAGE: HTML
+CODE:
+```
+<dialogopen><article><header><buttonaria-label="Close"rel="prev"></button><p><strong>🗓️ Thank You for Registering!</strong></p></header><p>      upcoming event. Please arrive at the museum 
+      on time to check in and get started.
+</p><ul><li>Date: Saturday, April 15</li><li>Time: 10:00am - 12:00pm</li></ul></article></dialog>
+```
+
+--------------------------------
+
+TITLE: Basic HTML Template with Pico.css
+DESCRIPTION: This is a starter HTML template that includes Pico.css and sets up a basic page structure. It configures the viewport, color scheme, and includes the Pico.css stylesheet.
+
+SOURCE: https://picocss.com/docs/version-picker
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Dropdowns Styled as Buttons
+DESCRIPTION: Shows how to transform a dropdown into a button by assigning the `role="button"` attribute to the `<summary>` element. This example also includes variations for primary, secondary, and contrast button styles, as well as outline versions.
+
+SOURCE: https://picocss.com/docs/dropdown
+
+LANGUAGE: HTML
+CODE:
+```
+<!-- Primary --><detailsclass="dropdown"><summaryrole="button"></summary><ul></ul></details><!-- Secondary --><detailsclass="dropdown"><summaryrole="button"class="secondary"></summary><ul></ul></details><!-- Contrast --><detailsclass="dropdown"><summaryrole="button"class="contrast"></summary><ul></ul></details><!-- Primary outline --><detailsclass="dropdown"><summaryrole="button"class="outline"></summary><ul></ul></details><!-- Secondary outline --><detailsclass="dropdown"><summaryrole="button"class="outline secondary"></summary><ul></ul></details><!-- Contrast outline --><detailsclass="dropdown"><summaryrole="button"class="outline contrast"></summary><ul></ul></details>
+```
+
+--------------------------------
+
+TITLE: Pico.css Starter HTML Template
+DESCRIPTION: This is a basic HTML5 template that includes the Pico.css framework (Jade theme) and sets up essential meta tags for character set, viewport, and color scheme. It provides a minimal structure for a Pico.css-powered webpage.
+
+SOURCE: https://picocss.com/docs/version-picker/jade
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.jade.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Nav Component with Dropdown Integration (HTML)
+DESCRIPTION: Shows how to embed a dropdown menu within the Nav component using the `<details>` and `<summary>` elements. This example includes nested list items for the dropdown content.
+
+SOURCE: https://picocss.com/docs/nav
+
+LANGUAGE: HTML
+CODE:
+```
+<nav><ul><li><strong>Acme Corp</strong></li></ul><ul><li><ahref="#"class="secondary">Services</a></li><li><detailsclass="dropdown"><summary></summary><uldir="rtl"><li><ahref="#">Profile</a></li><li><ahref="#">Settings</a></li><li><ahref="#">Security</a></li><li><ahref="#">Logout</a></li></ul></details></li></ul></nav>
+```
+
+--------------------------------
+
+TITLE: Pico.css Starter HTML Template
+DESCRIPTION: This is a basic HTML template demonstrating the structure for a project using Pico.css with the yellow theme. It includes essential meta tags, viewport settings, and the Pico.css stylesheet link.
+
+SOURCE: https://picocss.com/docs/version-picker/yellow
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.yellow.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Basic HTML Template with Pico.css
+DESCRIPTION: A starter HTML template that includes the necessary meta tags, viewport settings, and the Pico.css stylesheet for a basic responsive layout.
+
+SOURCE: https://picocss.com/docs/version-picker/violet
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.violet.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: HTML Structure with Semantic Landmarks
+DESCRIPTION: Demonstrates the basic HTML structure using <header>, <main>, and <footer> as direct children of <body>. This setup provides responsive vertical padding for a well-structured page layout.
+
+SOURCE: https://picocss.com/docs/landmarks-section
+
+LANGUAGE: HTML
+CODE:
+```
+<body><header>...</header><main>...</main><footer>...</footer></body>
+```
+
+--------------------------------
+
+TITLE: Basic HTML Template with Pico.css
+DESCRIPTION: A starter HTML template that includes the Pico.css grey theme and sets up a basic responsive layout with a container and a heading.
+
+SOURCE: https://picocss.com/docs/version-picker/grey
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="css/pico.grey.min.css">
+  <title>Hello world!</title>
+</head>
+<body>
+  <main class="container">
+    <h1>Hello world!</h1>
+  </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Form with Grid Layout (HTML)
+DESCRIPTION: Demonstrates integrating form elements within a `.grid` container for responsive form layouts. This example shows login and password inputs within a fieldset using the grid system.
+
+SOURCE: https://picocss.com/docs/forms
+
+LANGUAGE: HTML
+CODE:
+```
+<form><fieldset class="grid"><input name="login" placeholder="Login" aria-label="Login" autocomplete="username"/><input type="password" name="password" placeholder="Password" aria-label="Password" autocomplete="current-password"/><input type="submit" value="Log in"/></fieldset></form>
+```
+
+--------------------------------
+
+TITLE: Create Basic Card with Pico.css
+DESCRIPTION: Demonstrates how to create a basic card component using semantic HTML markup with Pico.css. This structure ensures graceful spacing across different devices and viewports.
+
+SOURCE: https://picocss.com/docs/card
+
+LANGUAGE: HTML
+CODE:
+```
+<article>I’m a card!</article>
+```
+
+--------------------------------
+
+TITLE: Pico.css: Input Validation States
+DESCRIPTION: Demonstrates how to implement validation states for input fields using `aria-invalid`. It shows examples for both valid and invalid states, including the use of helper text associated with the input.
+
+SOURCE: https://picocss.com/docs/forms/input
+
+LANGUAGE: HTML
+CODE:
+```
+<input type="text" name="valid" value="Valid" aria-invalid="false"><input type="text" name="invalid" value="Invalid" aria-invalid="true">
+```
+
+LANGUAGE: HTML
+CODE:
+```
+<input type="text" name="valid" value="Valid" aria-invalid="false" aria-describedby="valid-helper"><small id="valid-helper">Looks good!</small><input type="text" name="invalid" value="Invalid" aria-invalid="true" aria-describedby="invalid-helper"><small id="invalid-helper"></small>
+```
+
+--------------------------------
+
+TITLE: Basic HTML Template with Pico.css
+DESCRIPTION: A starter HTML template that includes Pico.css with an indigo theme and sets up basic page structure. It includes meta tags for viewport and color scheme, and a simple container with a heading.
+
+SOURCE: https://picocss.com/docs/version-picker/indigo
+
+LANGUAGE: HTML
+CODE:
+```
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="css/pico.indigo.min.css">
+    <title>Hello world!</title>
+</head>
+<body>
+    <main class="container">
+        <h1>Hello world!</h1>
+    </main>
+</body>
+</html>
+```
+
+--------------------------------
+
+TITLE: Dropdown within Navigation with Pico.css
+DESCRIPTION: Demonstrates nesting a dropdown component within a navigation bar (`<nav>`). This example shows a dropdown used as a link within the navigation structure, including a right-to-left directionality example.
+
+SOURCE: https://picocss.com/docs/v1/dropdowns
+
+LANGUAGE: HTML
+CODE:
+```
+<nav>
+  <ul>
+    <li><strong>Brand</strong></li>
+  </ul>
+  <ul>
+    <li><a href="#">Link</a></li>
+    <li>
+      <details role="list" dir="rtl">
+        <summary aria-haspopup="listbox" role="link">Dropdown</summary>
+        <ul role="listbox">
+          <li><a>Action</a></li>
+          <li><a>Another action</a></li>
+          <li><a>Something else here</a></li>
+        </ul>
+      </details>
+    </li>
+  </ul>
+</nav>
+```
+
+--------------------------------
+
+TITLE: Basic Dropdown and Select Implementation
+DESCRIPTION: Demonstrates the fundamental structure for creating a dropdown menu using `<details>` and `<summary>`, alongside a standard HTML `<select>` element for comparison. Both components utilize a list of options for 'Solid', 'Liquid', 'Gas', and 'Plasma'.
+
+SOURCE: https://picocss.com/docs/dropdown
+
+LANGUAGE: HTML
+CODE:
+```
+<detailsclass="dropdown"><summary>Dropdown</summary><ul><li><ahref="#">Solid</a></li><li><ahref="#">Liquid</a></li><li><ahref="#">Gas</a></li><li><ahref="#">Plasma</a></li></ul></details><!-- Select --><selectname="select"aria-label="Select"required><optionselecteddisabledvalue="">Select</option><option>Solid</option><option>Liquid</option><option>Gas</option><option>Plasma</option>false
+</select>
+```

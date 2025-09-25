@@ -1,3 +1,10 @@
+---------
+
+**Plan Completed** 2025-09-23  
+commit: 016f71f4bed5a707c273a24536f48cc3ca6dab42
+
+---------
+
 # zInfo Metadata Format Restructure Plan
 
 ## Overview

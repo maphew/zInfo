@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <title>Pico CSS Checkbox Variables Demo</title>
+  <style>
+    /* Additional styles for demo sections */
+    section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border: 1px solid var(--pico-border);
+      border-radius: var(--pico-border-radius);
+    }
+    section h2 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Pico CSS Checkbox Variables Demo</h1>
+    <p>This page demonstrates how Pico CSS variables affect checkbox elements, including basic checkboxes, switches, form integration, and custom styling through CSS variables.</p>
+
+    <section>
+      <h2>Basic Checkboxes</h2>
+      <label><input type="checkbox"> Unchecked</label><br>
+      <label><input type="checkbox" checked> Checked</label><br>
+      <label><input type="checkbox" disabled> Disabled</label><br>
+      <label><input type="checkbox" checked disabled> Checked & Disabled</label>
+    </section>
+
+    <section>
+      <h2>Switches (role="switch")</h2>
+      <label for="switch1">
+        <input type="checkbox" id="switch1" name="switch1" role="switch">
+        Switch Off
+      </label><br>
+      <label for="switch2">
+        <input type="checkbox" id="switch2" name="switch2" role="switch" checked>
+        Switch On
+      </label><br>
+      <label for="switch3">
+        <input type="checkbox" id="switch3" name="switch3" role="switch" disabled>
+        Disabled Switch
+      </label><br>
+      <label for="switch4">
+        <input type="checkbox" id="switch4" name="switch4" role="switch" checked disabled>
+        Checked Disabled Switch
+      </label>
+    </section>
+
+    <section>
+      <h2>Horizontal Stacking in Fieldset</h2>
+      <fieldset>
+        <legend>Language preferences:</legend>
+        <input type="checkbox" id="hindi" name="hindi" checked/>
+        <label for="hindi">Hindi</label>
+        <input type="checkbox" id="swahili" name="swahili"/>
+        <label for="swahili">Swahili</label>
+        <input type="checkbox" id="navi" name="navi" disabled/>
+        <label for="navi" aria-disabled="true">Na'vi</label>
+      </fieldset>
+    </section>
+
+    <section>
+      <h2>Validation States</h2>
+      <label>
+        <input type="checkbox" aria-invalid="false">
+        Valid State
+      </label><br>
+      <label>
+        <input type="checkbox" aria-invalid="true">
+        Invalid State
+      </label>
+    </section>
+
+    <section>
+      <h2>Responsive Form with Grid</h2>
+      <form>
+        <div class="grid">
+          <label for="firstname">
+            First name
+            <input type="text" id="firstname" name="firstname" placeholder="First name" required>
+          </label>
+          <label for="lastname">
+            Last name
+            <input type="text" id="lastname" name="lastname" placeholder="Last name" required>
+          </label>
+        </div>
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" placeholder="Email address" required>
+        <small>We'll never share your email with anyone else.</small>
+        <label><input type="checkbox" name="subscribe"> Subscribe to newsletter</label>
+        <label><input type="checkbox" name="agree" required> I agree to terms</label>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <section style="--pico-primary: #007bff;">
+      <h2>Blue Theme (--pico-primary: #007bff)</h2>
+      <label><input type="checkbox"> Checkbox</label><br>
+      <label for="blue-switch">
+        <input type="checkbox" id="blue-switch" name="blue-switch" role="switch" checked>
+        Switch
+      </label>
+    </section>
+
+    <section style="--pico-primary: #e74c3c;">
+      <h2>Red Theme (--pico-primary: #e74c3c)</h2>
+      <label><input type="checkbox" checked> Checkbox</label><br>
+      <label for="red-switch">
+        <input type="checkbox" id="red-switch" name="red-switch" role="switch">
+        Switch
+      </label>
+    </section>
+
+    <section style="--pico-primary: #27ae60;">
+      <h2>Green Theme (--pico-primary: #27ae60)</h2>
+      <label><input type="checkbox"> Checkbox</label><br>
+      <label for="green-switch">
+        <input type="checkbox" id="green-switch" name="green-switch" role="switch" checked>
+        Switch
+      </label>
+    </section>
+
+    <section style="--pico-border-radius: 0;">
+      <h2>Square Checkboxes (--pico-border-radius: 0)</h2>
+      <label><input type="checkbox"> Square Checkbox</label><br>
+      <label for="square-switch">
+        <input type="checkbox" id="square-switch" name="square-switch" role="switch" checked>
+        Square Switch
+      </label>
+    </section>
+
+    <section style="--pico-border-radius: 1rem;">
+      <h2>Rounded Checkboxes (--pico-border-radius: 1rem)</h2>
+      <label><input type="checkbox" checked> Rounded Checkbox</label><br>
+      <label for="rounded-switch">
+        <input type="checkbox" id="rounded-switch" name="rounded-switch" role="switch">
+        Rounded Switch
+      </label>
+    </section>
+
+    <section style="--pico-font-size: 0.875rem; --pico-spacing: 0.5rem;">
+      <h2>Smaller Size (--pico-font-size: 0.875rem; --pico-spacing: 0.5rem)</h2>
+      <label><input type="checkbox"> Small Checkbox</label><br>
+      <label for="small-switch">
+        <input type="checkbox" id="small-switch" name="small-switch" role="switch" checked>
+        Small Switch
+      </label>
+    </section>
+
+    <section style="--pico-font-size: 1.25rem; --pico-spacing: 1.5rem;">
+      <h2>Larger Size (--pico-font-size: 1.25rem; --pico-spacing: 1.5rem)</h2>
+      <label><input type="checkbox"> Large Checkbox</label><br>
+      <label for="large-switch">
+        <input type="checkbox" id="large-switch" name="large-switch" role="switch">
+        Large Switch
+      </label>
+    </section>
+
+    <section>
+      <h2>Input Group with Checkbox</h2>
+      <div role="group" class="input-group">
+        <input type="text" placeholder="Search...">
+        <label><input type="checkbox" name="exact"> Exact match</label>
+        <button type="button">Search</button>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

@@ -8,6 +8,7 @@ import logging
 import time
 from typing import Any, Tuple, List, Optional
 import click
+import uvicorn
 
 # Constants
 # Scan profiles define preset depth levels for directory scanning
@@ -344,67 +345,75 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         resources = []
         total_count = 0
 
-    # Search form with single input and clickable field selection labels
+    # Search form with single input and switch-style field selection
     search_form = Form(
         Fieldset(
             Legend("Search Resources"),
             Input(name="query", placeholder="Enter search term...", required=True),
-            Div(
-                # Hidden checkboxes for form submission
-                Input(type="checkbox", name="search_title", value="true", checked=True, id="search_title", style="display: none;"),
-                Input(type="checkbox", name="search_shortname", value="true", checked=True, id="search_shortname", style="display: none;"),
-                Input(type="checkbox", name="search_client", value="true", checked=True, id="search_client", style="display: none;"),
-                Input(type="checkbox", name="search_team", value="true", checked=True, id="search_team", style="display: none;"),
-                Input(type="checkbox", name="search_author", value="true", checked=True, id="search_author", style="display: none;"),
-                Input(type="checkbox", name="search_type", value="true", checked=True, id="search_type", style="display: none;"),
-                Input(type="checkbox", name="search_dir_id", value="true", checked=True, id="search_dir_id", style="display: none;"),
-                # Clickable labels that control the hidden checkboxes
-                # Note: Custom CSS classes are used here to provide visual feedback for the clickable search field toggles.
-                # This departs from idiomatic FastHTML's "exclusive use of Pico CSS without custom styling" because
-                # the UX requires dynamic visual state changes (bold/color/background) that Pico doesn't provide out-of-the-box.
-                # The JavaScript below handles the toggling of these classes and checkbox states.
-                Div(
-                    Label("Title", for_="search_title", cls="bold primary rounded px-2 py-1 search-field-enabled"),
-                    Label("Shortname", for_="search_shortname", cls="bold primary rounded px-2 py-1 search-field-enabled"),
-                    Label("Client", for_="search_client", cls="bold primary rounded px-2 py-1 search-field-enabled"),
-                    Label("Team", for_="search_team", cls="bold primary rounded px-2 py-1 search-field-enabled"),
-                    Label("Author", for_="search_author", cls="bold primary rounded px-2 py-1 search-field-enabled"),
-                    Label("Type", for_="search_type", cls="bold primary rounded px-2 py-1 search-field-enabled"),
-                    Label("Dir ID", for_="search_dir_id", cls="bold primary rounded px-2 py-1 search-field-enabled"),
-                    style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;"
+            Button("Search", type="submit"),
+            Fieldset(
+                Legend("Toggle searchable fields:"),
+                Label(
+                    Input(type="checkbox", name="search_title", role="switch", checked=True),
+                    "Title"
                 ),
-                style="display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0;"
+                Label(
+                    Input(type="checkbox", name="search_shortname", role="switch", checked=True),
+                    "Shortname"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_client", role="switch", checked=True),
+                    "Client"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_team", role="switch", checked=True),
+                    "Team"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_author", role="switch", checked=True),
+                    "Author"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_type", role="switch", checked=True),
+                    "Type"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_dir_id", role="switch", checked=True),
+                    "Dir ID"
+                ),
+                cls="grid"
             ),
-            Button("Search", type="submit")
         ),
         hx_get="/search",
         hx_target="#results",
         hx_swap="innerHTML"
     )
-    # Scan form
-    scan_form = Form(
-        Fieldset(
-            Legend("Scan Directory"),
-            Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
-            Label("Profile", Select(
-                Option("Quick", value="quick"),
-                Option("Standard", value="standard"),
-                Option("Deep", value="deep"),
-                Option("Custom", value="custom"),
-                id="profile", name="profile", onchange="updateProfile()"
-            )),
-            Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", aria_describedby="depth-help"),
-            Button("Scan", type="submit", id="scan-btn", disabled=False, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
-        ),
-        Div(id="scan-status"),
-        Div(
-            Div(id="validation-errors"),
-            Div(id="scan-errors"),
-            Div(id="scan-success"),
-            id="scan-results"
-        ),
-        id="scan-form",
-        onsubmit="return validateScanForm()"
+    # Scan form as collapsible accordion
+    scan_form = Details(
+        Summary("Scan Directory"),
+        Form(
+            Fieldset(
+                Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
+                Label("Profile", Select(
+                    Option("Quick", value="quick"),
+                    Option("Standard", value="standard"),
+                    Option("Deep", value="deep"),
+                    Option("Custom", value="custom"),
+                    id="profile", name="profile", onchange="updateProfile()"
+                )),
+                Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", aria_describedby="depth-help"),
+                Button("Scan", type="submit", id="scan-btn", disabled=False, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
+            ),
+            Div(id="scan-status"),
+            Div(
+                Div(id="validation-errors"),
+                Div(id="scan-errors"),
+                Div(id="scan-success"),
+                id="scan-results"
+            ),
+            id="scan-form",
+            onsubmit="return validateScanForm()"
+        )
     )
 
     table_content = build_resource_table(resources, total_count, page, limit, "/", "", "No cached resources found.")
@@ -415,59 +424,7 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         P("Scan directories for project metadata files and browse indexed resources"),
         Grid(search_form, scan_form),
         Card(results_div),
-        Card(Div(id="detail")),
-        Style("""
-            .search-field-enabled {
-                background-color: rgba(0, 122, 204, 0.1);
-            }
-            .search-field-disabled {
-                background-color: transparent;
-            }
-        """),
-        # JavaScript for clickable field selection labels
-        Script("""
-            function toggleFieldLabel(label, checkboxId) {
-                const checkbox = document.getElementById(checkboxId);
-                const isChecked = checkbox.checked;
-
-                if (isChecked) {
-                    // Disable field - muted styling
-                    label.classList.remove('bold', 'primary', 'search-field-enabled');
-                    label.classList.add('secondary', 'search-field-disabled');
-                    checkbox.checked = false;
-                } else {
-                    // Enable field - bold/bright styling
-                    label.classList.remove('secondary', 'search-field-disabled');
-                    label.classList.add('bold', 'primary', 'search-field-enabled');
-                    checkbox.checked = true;
-                }
-            }
-
-            // Add click handlers to all field labels
-            document.addEventListener('DOMContentLoaded', function() {
-                const fieldLabels = [
-                    { label: 'Title', checkbox: 'search_title' },
-                    { label: 'Shortname', checkbox: 'search_shortname' },
-                    { label: 'Client', checkbox: 'search_client' },
-                    { label: 'Team', checkbox: 'search_team' },
-                    { label: 'Author', checkbox: 'search_author' },
-                    { label: 'Type', checkbox: 'search_type' },
-                    { label: 'Dir ID', checkbox: 'search_dir_id' }
-                ];
-
-                fieldLabels.forEach(field => {
-                    const labelElement = Array.from(document.querySelectorAll('label')).find(el =>
-                        el.textContent.trim() === field.label
-                    );
-                    if (labelElement) {
-                        labelElement.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            toggleFieldLabel(this, field.checkbox);
-                        });
-                    }
-                });
-            });
-        """)
+        Card(Div(id="detail"))
     )
 
 @rt("/search")
@@ -506,7 +463,7 @@ def search(request, query: str = "", search_title: str = "", search_shortname: s
 
         # Check if any search fields are enabled
         enabled_fields = [search_title, search_shortname, search_client, search_team, search_author, search_type, search_dir_id]
-        any_field_enabled = any(field == "true" for field in enabled_fields)
+        any_field_enabled = any(field in ["true", "on"] for field in enabled_fields)
 
         # Build search parameters dict based on enabled fields
         search_params = {}
@@ -514,19 +471,19 @@ def search(request, query: str = "", search_title: str = "", search_shortname: s
             search_term = query.strip()
 
             # Only add fields to search if their corresponding checkbox is enabled
-            if search_title == "true":
+            if search_title in ["true", "on"]:
                 search_params['title'] = search_term
-            if search_shortname == "true":
+            if search_shortname in ["true", "on"]:
                 search_params['shortname'] = search_term
-            if search_client == "true":
+            if search_client in ["true", "on"]:
                 search_params['client'] = search_term
-            if search_team == "true":
+            if search_team in ["true", "on"]:
                 search_params['team'] = search_term
-            if search_author == "true":
+            if search_author in ["true", "on"]:
                 search_params['author'] = search_term
-            if search_type == "true":
+            if search_type in ["true", "on"]:
                 search_params['metadata_type'] = search_term
-            if search_dir_id == "true":
+            if search_dir_id in ["true", "on"]:
                 search_params['dir_id'] = search_term
 
         offset = (page - 1) * limit
@@ -723,7 +680,7 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
 
 def run_server(host=DEFAULT_HOST, port=DEFAULT_PORT, reload=True):
     """Start the zInfo FastHTML web UI server."""
-    serve('zinfo.ui.fh_ui', app, host=host, port=port, reload=reload)
+    uvicorn.run('zinfo.ui.fh_ui:app', host=host, port=port, reload=reload)
 
 @click.command()
 @click.option("--host", default=DEFAULT_HOST, help="Host to bind to")
