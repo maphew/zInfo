@@ -154,7 +154,7 @@ def validate_scan_params(root, profile, custom_depth):
         if custom_depth is None or not isinstance(custom_depth, int) or custom_depth <= 0:
             raise HTTPException(400, "custom_depth must be a positive integer when profile is custom")
 
-def validate_search_params(title, shortname, client, team, author, type_, dir_id):
+def validate_search_params(query, search_title, search_shortname, search_client, search_team, search_author, search_type, search_dir_id):
     """
     Validate search parameters for length and character safety.
 
@@ -162,24 +162,40 @@ def validate_search_params(title, shortname, client, team, author, type_, dir_id
     are used to avoid SQL injection or other issues.
 
     Args:
-        title: Search title parameter
-        shortname: Search shortname parameter
-        client: Search client parameter
-        team: Search team parameter
-        author: Search author parameter
-        type_: Search type parameter
-        dir_id: Search dir_id parameter
+        query: Search query parameter
+        search_title: Boolean flag for title field search
+        search_shortname: Boolean flag for shortname field search
+        search_client: Boolean flag for client field search
+        search_team: Boolean flag for team field search
+        search_author: Boolean flag for author field search
+        search_type: Boolean flag for type field search
+        search_dir_id: Boolean flag for dir_id field search
 
     Raises:
         HTTPException: For invalid parameter lengths or characters
     """
-    for param, value in [('title', title), ('shortname', shortname), ('client', client), ('team', team), ('author', author), ('type', type_), ('dir_id', dir_id)]:
-        if value:
-            value = value.strip()
-            if len(value) > MAX_SEARCH_PARAM_LENGTH:
-                raise HTTPException(400, f"{param} must be {MAX_SEARCH_PARAM_LENGTH} characters or less")
-            if not SEARCH_PARAM_PATTERN.match(value):
-                raise HTTPException(400, f"{param} contains invalid characters")
+    # Validate query parameter
+    if query:
+        query = query.strip()
+        if len(query) > MAX_SEARCH_PARAM_LENGTH:
+            raise HTTPException(400, f"query must be {MAX_SEARCH_PARAM_LENGTH} characters or less")
+        if not SEARCH_PARAM_PATTERN.match(query):
+            raise HTTPException(400, "query contains invalid characters")
+
+    # Validate boolean flags (should be 'true' or empty)
+    boolean_params = {
+        'search_title': search_title,
+        'search_shortname': search_shortname,
+        'search_client': search_client,
+        'search_team': search_team,
+        'search_author': search_author,
+        'search_type': search_type,
+        'search_dir_id': search_dir_id
+    }
+
+    for param, value in boolean_params.items():
+        if value and value != 'true':
+            raise HTTPException(400, f"{param} must be 'true' or empty")
 
 def validate_detail_id(id_):
     """
@@ -329,47 +345,75 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         resources = []
         total_count = 0
 
-    # Search form with labels
+    # Search form with single input and switch-style field selection
     search_form = Form(
         Fieldset(
             Legend("Search Resources"),
-            Label("Title", Input(name="title", placeholder="Search by title")),
-            Label("Shortname", Input(name="shortname", placeholder="Search by shortname")),
-            Label("Client", Input(name="client", placeholder="Search by client")),
-            Label("Team", Input(name="team", placeholder="Search by team member")),
-            Label("Author", Input(name="author", placeholder="Search by author (legacy)")),
-            Label("Type", Input(name="type", placeholder="Search by type")),
-            Label("Dir ID", Input(name="dir_id", placeholder="Search by dir ID")),
-            Button("Search", type="submit")
+            Input(name="query", placeholder="Enter search term...", required=True),
+            Button("Search", type="submit"),
+            Fieldset(
+                Legend("Toggle searchable fields:"),
+                Label(
+                    Input(type="checkbox", name="search_title", role="switch", checked=True),
+                    "Title"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_shortname", role="switch", checked=True),
+                    "Shortname"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_client", role="switch", checked=True),
+                    "Client"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_team", role="switch", checked=True),
+                    "Team"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_author", role="switch", checked=True),
+                    "Author"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_type", role="switch", checked=True),
+                    "Type"
+                ),
+                Label(
+                    Input(type="checkbox", name="search_dir_id", role="switch", checked=True),
+                    "Dir ID"
+                ),
+                cls="grid"
+            ),
         ),
         hx_get="/search",
         hx_target="#results",
         hx_swap="innerHTML"
     )
-    # Scan form
-    scan_form = Form(
-        Fieldset(
-            Legend("Scan Directory"),
-            Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
-            Label("Profile", Select(
-                Option("Quick", value="quick"),
-                Option("Standard", value="standard"),
-                Option("Deep", value="deep"),
-                Option("Custom", value="custom"),
-                id="profile", name="profile", onchange="updateProfile()"
-            )),
-            Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", aria_describedby="depth-help"),
-            Button("Scan", type="submit", id="scan-btn", disabled=False, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
-        ),
-        Div(id="scan-status"),
-        Div(
-            Div(id="validation-errors"),
-            Div(id="scan-errors"),
-            Div(id="scan-success"),
-            id="scan-results"
-        ),
-        id="scan-form",
-        onsubmit="return validateScanForm()"
+    # Scan form as collapsible accordion
+    scan_form = Details(
+        Summary("Scan Directory"),
+        Form(
+            Fieldset(
+                Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
+                Label("Profile", Select(
+                    Option("Quick", value="quick"),
+                    Option("Standard", value="standard"),
+                    Option("Deep", value="deep"),
+                    Option("Custom", value="custom"),
+                    id="profile", name="profile", onchange="updateProfile()"
+                )),
+                Input(id="custom_depth", name="custom_depth", type="number", min="1", max=str(MAX_DEPTH), placeholder="Depth", aria_describedby="depth-help"),
+                Button("Scan", type="submit", id="scan-btn", disabled=False, hx_post="/scan", hx_target="#scan-status", hx_swap="innerHTML"),
+            ),
+            Div(id="scan-status"),
+            Div(
+                Div(id="validation-errors"),
+                Div(id="scan-errors"),
+                Div(id="scan-success"),
+                id="scan-results"
+            ),
+            id="scan-form",
+            onsubmit="return validateScanForm()"
+        )
     )
 
     table_content = build_resource_table(resources, total_count, page, limit, "/", "", "No cached resources found.")
@@ -380,13 +424,13 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
         P("Scan directories for project metadata files and browse indexed resources"),
         Grid(search_form, scan_form),
         Card(results_div),
-        Card(Div(id="detail")),
+        Card(Div(id="detail"))
     )
 
 @rt("/search")
-def search(request, title: str = "", shortname: str = "", client: str = "", team: str = "", author: str = "", type: str = "", dir_id: str = "", page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
+def search(request, query: str = "", search_title: str = "", search_shortname: str = "", search_client: str = "", search_team: str = "", search_author: str = "", search_type: str = "", search_dir_id: str = "", page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
     """
-    Search resources by title, author, type, and/or ID with pagination.
+    Search resources using a single query term with field selection checkboxes.
 
     Filters resources based on provided search criteria. Uses caching to improve
     performance for repeated searches with same parameters.
@@ -397,38 +441,50 @@ def search(request, title: str = "", shortname: str = "", client: str = "", team
 
     Args:
         request: FastHTML request object (used to detect HTMX requests)
-        title: Search term for resource titles
-        author: Search term for resource authors
-        type: Search term for resource types
-        id: Search term for resource IDs
+        query: Search term to look for
+        search_title: Boolean flag to search in title field
+        search_shortname: Boolean flag to search in shortname field
+        search_client: Boolean flag to search in client field
+        search_team: Boolean flag to search in team field
+        search_author: Boolean flag to search in author field
+        search_type: Boolean flag to search in type field
+        search_dir_id: Boolean flag to search in dir_id field
         page: Page number for pagination
         limit: Number of results per page
 
     Returns:
         HTML content - table fragment for HTMX, full page otherwise
     """
-    validate_search_params(title, shortname, client, team, author, type, dir_id)
+    validate_search_params(query, search_title, search_shortname, search_client, search_team, search_author, search_type, search_dir_id)
     validate_pagination_params(page, limit)
     db_path = os.getenv("ZINFO_DB_PATH", DEFAULT_DB_PATH)
     try:
         cache = Cache(Path(db_path))
 
-        # Build search parameters dict, filtering out empty values
+        # Check if any search fields are enabled
+        enabled_fields = [search_title, search_shortname, search_client, search_team, search_author, search_type, search_dir_id]
+        any_field_enabled = any(field in ["true", "on"] for field in enabled_fields)
+
+        # Build search parameters dict based on enabled fields
         search_params = {}
-        if title.strip():
-            search_params['title'] = title.strip()
-        if shortname.strip():
-            search_params['shortname'] = shortname.strip()
-        if client.strip():
-            search_params['client'] = client.strip()
-        if team.strip():
-            search_params['team'] = team.strip()
-        if author.strip():
-            search_params['author'] = author.strip()
-        if type.strip():
-            search_params['metadata_type'] = type.strip()
-        if dir_id.strip():
-            search_params['dir_id'] = dir_id.strip()
+        if query.strip() and any_field_enabled:
+            search_term = query.strip()
+
+            # Only add fields to search if their corresponding checkbox is enabled
+            if search_title in ["true", "on"]:
+                search_params['title'] = search_term
+            if search_shortname in ["true", "on"]:
+                search_params['shortname'] = search_term
+            if search_client in ["true", "on"]:
+                search_params['client'] = search_term
+            if search_team in ["true", "on"]:
+                search_params['team'] = search_term
+            if search_author in ["true", "on"]:
+                search_params['author'] = search_term
+            if search_type in ["true", "on"]:
+                search_params['metadata_type'] = search_term
+            if search_dir_id in ["true", "on"]:
+                search_params['dir_id'] = search_term
 
         offset = (page - 1) * limit
         # Create cache key from sorted params to ensure consistent hashing
@@ -446,9 +502,13 @@ def search(request, title: str = "", shortname: str = "", client: str = "", team
         logging.error(f"Error searching resources: {e}", exc_info=True)
         content = P("An error occurred while searching. Please try again.")
     else:
-        # Preserve search parameters in pagination links
-        extra_params = f"&title={title}&shortname={shortname}&client={client}&team={team}&author={author}&type={type}&dir_id={dir_id}"
-        content = build_resource_table(resources, total_count, page, limit, "/search", extra_params, "No matching resources found.")
+        # Handle edge case where no search fields are enabled
+        if query.strip() and not any_field_enabled:
+            content = P("Please select at least one field to search in.")
+        else:
+            # Preserve search parameters in pagination links
+            extra_params = f"&query={query}&search_title={search_title}&search_shortname={search_shortname}&search_client={search_client}&search_team={search_team}&search_author={search_author}&search_type={search_type}&search_dir_id={search_dir_id}"
+            content = build_resource_table(resources, total_count, page, limit, "/search", extra_params, "No matching resources found.")
 
     # HTMX requests get only the content fragment, direct requests get full page
     if request.headers.get("HX-Request"):
@@ -568,15 +628,15 @@ def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int]
         index_cache.clear()
         search_cache.clear()
 
-        # Fetch updated resource list for display
-        resources, _ = cache.get_all_resources()
+        # Fetch updated resource list for display (first page only for performance)
+        resources, total_count = cache.get_all_resources(limit=DEFAULT_LIMIT, offset=0)
     except Exception as e:
         logging.error(f"Error during scan: {e}", exc_info=True)
         status_div = Div("Scan failed due to an error.", id="scan-status")
         return status_div, Toast("Scan failed", typ="error")
 
-    # Build updated results table
-    content = build_resource_table(resources, no_resources_msg="No cached resources found.")
+    # Build updated results table with pagination
+    content = build_resource_table(resources, total_count, page=1, limit=DEFAULT_LIMIT, base_url="/", extra_params="", no_resources_msg="No cached resources found.")
 
     # Generate appropriate messages based on scan outcome
     if result.errors:
