@@ -36,10 +36,15 @@ def sample_results() -> List[ResourceMetadata]:
     """Sample resource metadata results for testing."""
     return [
         ResourceMetadata(
-            id="test/resource1",
+            dir_id="test/resource1",
+            dir_path="/test/resource1",
             title="Test Resource",
-            link="file://test.txt",
-            contact="test@example.com",
+            shortname="Test",
+            summary="A test resource",
+            client="Test Client",
+            team="Test Team",
+            contact_email="test@example.com",
+            location="zinfo.txt",
         )
     ]
 
