@@ -39,6 +39,35 @@ DEFAULT_PORT = 5001
 DEFAULT_DB_PATH = "zinfo.db"
 
 
+def page_template(title: str, *content) -> Any:
+    """
+    Shared page template that provides consistent headers and structure for all pages.
+
+    Includes common meta elements, favicon, and standardized title formatting.
+    All route handlers should use this template instead of calling Titled directly.
+
+    Args:
+        title: Page-specific title (will be prefixed with "zInfo")
+        *content: Page content elements
+
+    Returns:
+        Complete HTML page with consistent header structure
+    """
+    # Format the full title
+    full_title = f"zInfo - {title}" if title else "zInfo"
+
+    # Common head elements including the development favicon
+    head_elements = [
+        # Development mode favicon to stop console errors
+        Link(rel="icon", href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='55' font-size='50'>🛠️</text></svg>"),
+        # Additional meta tags can be added here as needed
+        Meta(name="viewport", content="width=device-width, initial-scale=1"),
+        Meta(name="description", content="zInfo - Project metadata indexing and browsing system"),
+        Link(rel="stylesheet", href="static/zinfo-shared.css", type="text/css")
+    ]
+
+    return Titled(full_title, *head_elements, *content)
+
 
 class TTLCache:
     """
@@ -103,11 +132,11 @@ index_cache = TTLCache(INDEX_CACHE_TTL)  # Cache for main index page results
 search_cache = TTLCache(SEARCH_CACHE_TTL)  # Cache for search results (shorter TTL due to dynamic queries)
 
 def not_found(req, exc):
-    return Titled("404 - Page Not Found", H1("404"), P("The page you requested was not found."))
+    return page_template("404", H1("404"), P("The page you requested was not found."))
 
 def internal_error(req, exc):
     logging.error(f"Internal server error: {exc}", exc_info=True)
-    return Titled("500 - Internal Server Error", H1("500"), P("An internal server error occurred. Please try again later."))
+    return page_template("500", H1("500"), P("An internal server error occurred. Please try again later."))
 
 app, rt = fast_app(htmx=True, pico=True, exception_handlers={404: not_found, 500: internal_error})
 
@@ -352,35 +381,29 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
             Input(name="query", placeholder="Enter search term...", required=True),
             Button("Search", type="submit"),
             Fieldset(
-                Legend("Toggle searchable fields:"),
-                Label(
-                    Input(type="checkbox", name="search_title", role="switch", checked=True),
-                    "Title"
-                ),
-                Label(
-                    Input(type="checkbox", name="search_shortname", role="switch", checked=True),
-                    "Shortname"
-                ),
-                Label(
-                    Input(type="checkbox", name="search_client", role="switch", checked=True),
-                    "Client"
-                ),
-                Label(
-                    Input(type="checkbox", name="search_team", role="switch", checked=True),
-                    "Team"
-                ),
-                Label(
-                    Input(type="checkbox", name="search_author", role="switch", checked=True),
-                    "Author"
-                ),
-                Label(
-                    Input(type="checkbox", name="search_type", role="switch", checked=True),
-                    "Type"
-                ),
-                Label(
-                    Input(type="checkbox", name="search_dir_id", role="switch", checked=True),
-                    "Dir ID"
-                ),
+                Legend("Search fields:"),
+
+                Input(type="checkbox", id="search_title", checked=True, hidden=True),
+                Label("Title", _for="search_title", cls="pill"),
+
+                Input(type="checkbox", id="search_shortname", checked=True, hidden=True),
+                Label("Shortname", _for="search_shortname", cls="pill"),
+
+                Input(type="checkbox", id="search_client", checked=True, hidden=True),
+                Label("Client", _for="search_client", cls="pill"),
+
+                Input(type="checkbox", id="search_team", checked=True, hidden=True),
+                Label("Team", _for="search_team", cls="pill"),
+
+                Input(type="checkbox", id="search_author", checked=True, hidden=True),
+                Label("Author", _for="search_author", cls="pill"),
+
+                Input(type="checkbox", id="search_type", checked=True, hidden=True), 
+                Label("Type", _for="search_type", cls="pill"),
+
+                Input(type="checkbox", id="search_dir_id", checked=True, hidden=True),
+                Label("Dir ID", _for="search_dir_id", cls="pill"),
+
                 cls="grid"
             ),
         ),
@@ -390,7 +413,7 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
     )
     # Scan form as collapsible accordion
     scan_form = Details(
-        Summary("Scan Directory"),
+        Summary("Scan Directory >>"),
         Form(
             Fieldset(
                 Label("Directory", Input(id="root", name="root", placeholder="~/", required=True, aria_describedby="root-help")),
@@ -419,10 +442,12 @@ def index(page: int = DEFAULT_PAGE, limit: int = DEFAULT_LIMIT):
     table_content = build_resource_table(resources, total_count, page, limit, "/", "", "No cached resources found.")
     results_div = Div(table_content, id="results")
 
-    return Titled(
-        "zInfo",
+    return page_template(
+        "Home",
         P("Scan directories for project metadata files and browse indexed resources"),
-        Grid(search_form, scan_form),
+        # Grid(search_form, scan_form),
+        search_form,
+        scan_form,
         Card(results_div),
         Card(Div(id="detail"))
     )
@@ -514,7 +539,7 @@ def search(request, query: str = "", search_title: str = "", search_shortname: s
     if request.headers.get("HX-Request"):
         return content
     else:
-        return Titled("zInfo UI", content)
+        return page_template("Search", content)
 
 @rt("/detail")
 def detail(request, id: str):
@@ -587,7 +612,7 @@ def detail(request, id: str):
     if request.headers.get("HX-Request"):
         return content
     else:
-        return Titled("zInfo UI - Detail", content)
+        return page_template("Detail", content)
 
 @rt("/scan", methods=["POST"])
 def scan(root: str = ".", profile: str = "standard", custom_depth: Optional[int] = None):

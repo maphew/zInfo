@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>pill Toggle Demo</title>
+  <!-- Pico CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    fieldset {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4em;
+      border: none;
+    }
+
+    label.pill {
+      display: inline-block;
+      padding: .3em .9em;
+      border-radius: 999px; /* pill shape */
+      border: 1px solid var(--pico-primary);
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.9em;
+      line-height: 1.5;
+      transition: all 0.2s;
+    }
+
+    /* unchecked */
+    input[type="checkbox"][hidden] + label.pill {
+      background: transparent;
+      color: var(--pico-primary);
+    }
+
+    /* checked */
+    input[type="checkbox"][hidden]:checked + label.pill {
+      background: var(--pico-primary);
+      color: white;
+      box-shadow: 0 0 0 2px var(--pico-primary);
+    }
+  </style>
+</head>
+<body class="container">
+
+  <h2>Searchable Fields (Pill Toggles)</h2>
+
+  <fieldset>
+    <input type="checkbox" id="title" hidden>
+    <label for="title" class="pill">Title</label>
+
+    <input type="checkbox" id="shortname" hidden>
+    <label for="shortname" class="pill">Shortname</label>
+
+    <input type="checkbox" id="client" hidden>
+    <label for="client" class="pill">Client</label>
+
+    <input type="checkbox" id="team" hidden>
+    <label for="team" class="pill">Team</label>
+
+    <input type="checkbox" id="author" hidden>
+    <label for="author" class="pill">Author</label>
+
+    <input type="checkbox" id="type" hidden>
+    <label for="type" class="pill">Type</label>
+
+    <input type="checkbox" id="dirid" hidden>
+    <label for="dirid" class="pill">Dir ID</label>
+  </fieldset>
+
+</body>
+</html>

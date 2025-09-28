@@ -25,6 +25,48 @@
     <p>This page demonstrates how Pico CSS variables affect checkbox elements, including basic checkboxes, switches, form integration, and custom styling through CSS variables.</p>
 
     <section>
+      <fieldset>
+      <legend>Toggle searchable fields:</legend>
+
+      <!-- Option A: input + label (preferred for a11y) -->
+      <input id="f-title" type="checkbox" role="switch" name="title" />
+      <label for="f-title">Title</label>
+
+      <input id="f-shortname" type="checkbox" role="switch" name="shortname" />
+      <label for="f-shortname">Shortname</label>
+
+      <input id="f-client" type="checkbox" role="switch" name="client" />
+      <label for="f-client">Client</label>
+    </fieldset>
+
+      <fieldset>
+        <legend>Toggle searchable fields:</legend>
+
+        <!-- Option B: wrap input in label (also works, compact markup) -->
+        <label><input type="checkbox" role="switch" name="title"> Title</label>
+        <label><input type="checkbox" role="switch" name="shortname"> Shortname</label>
+        <label><input type="checkbox" role="switch" name="client"> Client</label>
+      </fieldset>
+    </section>
+
+    <section>
+      <fieldset>
+  <legend>Toggle searchable fields:</legend>
+
+  <input type="checkbox" id="title" name="fields" value="title" hidden>
+  <label for="title" class="toggle">Title</label>
+
+  <input type="checkbox" id="shortname" name="fields" value="shortname" hidden>
+  <label for="shortname" class="toggle">Shortname</label>
+
+  <input type="checkbox" id="client" name="fields" value="client" hidden>
+  <label for="client" class="toggle">Client</label>
+</fieldset>
+
+    </section>
+
+
+    <section>
       <h2>Basic Checkboxes</h2>
       <label><input type="checkbox"> Unchecked</label><br>
       <label><input type="checkbox" checked> Checked</label><br>

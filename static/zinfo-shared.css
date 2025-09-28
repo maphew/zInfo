@@ -1,0 +1,25 @@
+/* zinfo shared css */
+label.pill {
+  display: inline-block;
+  padding: .3em .8em;
+  margin: .2em;
+  border-radius: 999px; /* pill shape */
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+
+/* default (unchecked) */
+input[type="checkbox"][hidden] + label.pill {
+  color: var(--pico-secondary);
+  opacity: 0.6;
+  border: 1px dashed var(--pico-secondary-border);
+}
+
+/* checked = filled chip */
+input[type="checkbox"][hidden]:checked + label.pill {
+  background: var(--pico-modal-overlay-background-color);
+  opacity: 1.0;
+  border: 1px solid var(--pico-background-color)
+}
