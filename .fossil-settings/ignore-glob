@@ -2,4 +2,5 @@
 __pycache__
 *.egg-info
 .pixi/
-tests/test_output/
+tests/
+*.db
