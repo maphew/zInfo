@@ -38,6 +38,27 @@ zInfo is a modular Python CLI tool with SQLite caching and FastHTML web UI for i
 **Formatting**: black (line length 88), ruff for linting
 **Paths**: Use pathlib.Path for cross-platform compatibility
 
+## Repository sync & canonical history
+
+**Fossil is canonical** (`~/OneDrive/fossils/zinfo.fossil`); Git and GitHub are downstream mirrors.
+
+**Fossil → Git mirror (incremental, append-only):**
+```
+fossil git export ~/OneDrive/fossils/zinfo.git
+```
+Run from a Fossil checkout of `zinfo.fossil`. Reuses `zinfo.git/.mirror_state/marks.txt` so SHAs stay stable across exports.
+
+**Resync local clone:**
+```
+cd ~/dev/zinfo && git fetch origin && git reset --hard origin/main
+```
+
+**Publish to GitHub** (no force-push; GitHub's pre-existing `master` holds unrelated older history and is preserved):
+```
+git push github main
+```
+GitHub `main` is the default branch and tracks Fossil `main`. Full decision record: `plans/Zinfo-Canonical-Workflow_2026-11-21.md` in the `-o-` repo.
+
 ## FastHTML Patterns
 
 - Use `fast_app()` with exception handlers as parameters (not decorators)
